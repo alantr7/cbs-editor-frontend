@@ -397,7 +397,7 @@ class Parser {
                             const popInParenthesis = stack.pop();
                             // second argument was a string in old code. if this breaks that's the cause
                             const operator = this.parseOperator(popInParenthesis as string);
-                            postfix.push(operator != null ? operator : new Literal(Literal.INT, parseInt(popInParenthesis as string)));
+                            postfix.push(operator !== null ? operator : new Literal(Literal.INT, parseInt(popInParenthesis as string)));
                             j++;
                         }
 
@@ -443,7 +443,7 @@ class Parser {
 
                     // todo: function calls or array access
                     const memberAccess = this.parseVariableAccessOrCall();
-                    if (memberAccess == null) {
+                    if (memberAccess === null) {
                         break;
                     } else {
                         postfix.push(memberAccess);
@@ -461,14 +461,19 @@ class Parser {
             j++;
         }
 
+        console.log('postfix', postfix);
+
         for (let i = 0; i < postfix.length; i++) {
             const operand = postfix[i];
             if (operand instanceof Operator) {
                 const operator = operand as Operator;
 
                 // consume two literals
-                const prev2 = postfix.pop();
-                const prev1 = postfix.pop();
+                const prev2 = postfix.splice(i - 1, 1)[0];
+                i--;
+
+                const prev1 = postfix.splice(i - 1, 1)[0];
+                i--;
 
                 // todo: check if operation can be performed on these two operands
                 postfix.splice(i, 1);
@@ -635,7 +640,7 @@ export function isCastOperator(input: string): boolean {
 }
 
 export function isNumber(input: string): boolean {
-    return input.match(/$\d+$/) !== undefined;
+    return input.match(/^\d+$/) !== null;
 }
 
 export function isBoolean(input: string): boolean {
