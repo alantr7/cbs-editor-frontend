@@ -1,4 +1,4 @@
-import type { AST, BuildResult, ParseError } from "./ast";
+import { Function, Type, Variable, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
 import { ModuleRepository } from "./module-repository";
 import type { TokenQueue } from "./tokenizer";
 import * as monaco from 'monaco-editor';
@@ -39,8 +39,11 @@ class Parser {
     public readonly moduleRepository = new ModuleRepository();
 
     private ast: AST = {
-        signatures: []
+        signatures: [],
+        functions: {},
     };
+
+    private context: ParserContext = new ParserContext();
 
     constructor(tokens: TokenQueue) {
         this.tokens = tokens;
@@ -48,14 +51,16 @@ class Parser {
             name: "bot",
             functions: {
                 move: {
+                    module: null,
                     name: "move",
                     parameter_types: [
-                        "string"
+                        Type.INT,
                     ],
-                    return_type: "int"
+                    return_type: Type.INT
                 }
             }
         });
+        this.context.scopes.push(new Scope());
     }
 
     parse(): BuildResult {
@@ -79,7 +84,7 @@ class Parser {
                 // }
                 else {
                     // try to find out if it's a variable or a function
-                    // parseFunctionOrVariable();
+                    this.parseFunctionOrVariable();
                     break;
                 }
             }
@@ -95,6 +100,8 @@ class Parser {
                     message: e.message,
                     severity: monaco.MarkerSeverity.Error
                 });
+            } else {
+                console.log(e);
             }
         }
 
@@ -120,6 +127,114 @@ class Parser {
         for (const fun of Object.values(module.functions)) {
             this.ast.signatures.push(fun);
             console.log("imported " + fun.name);
+        }
+    }
+
+    parseFunctionOrVariable() {
+        const rawType = this.tokens.next();
+        const type = this.parseType(rawType);
+
+        // todo: check if it's variable or function anyway and then throw exception with more useful message
+        if (type === null) {
+            this.tokens.rollback();
+            throw new ParserException(rawType, this.tokens.getLine(), this.tokens.getColumn(), "Unexpected token '" + rawType + "'.");
+        }
+
+        const name = this.tokens.next();
+        const differentiator = this.tokens.peek();
+
+        if (differentiator === "(") {
+            // it's a function
+            this.parseFunction(type, name);
+            return;
+        }
+        if (differentiator === "=" || differentiator === ";") {
+            // todo:
+            // this.parseVariableDeclare(type, name);
+            return;
+        }
+    }
+
+    parseFunction(type: Type, name: string): void {
+        this.expect(this.tokens.next(), "(");
+        const functionScope = this.context.getCurrentScope().createChild(false);
+        this.context.scopes.push(functionScope);
+
+        const parameterTypes: Type[] = new Array(8);
+        const parameterVariables: Variable[] = new Array(8);
+        let parameterCount = 0;
+        for (; parameterCount < parameterTypes.length; parameterCount++) {
+            const rawParameterType = this.tokens.peek();
+            if (rawParameterType === ")")
+                break;
+
+            this.tokens.advance();
+            const parameterType = this.parseType(rawParameterType as string);
+            if (parameterType == null) {
+                this.tokens.rollback();
+                throw new ParserException(rawParameterType as string, this.tokens.getLine(), this.tokens.getColumn(), "Unexpected token '" + rawParameterType + "'.");
+            }
+
+            const parameterName = this.tokens.next();
+            const parameterVariable = new Variable(parameterType, false, 0, 1);
+            functionScope.variables[parameterName] = parameterVariable;
+            functionScope.localVariables[parameterName] = parameterVariable;
+            functionScope.parameterVariables[parameterName] = parameterVariable;
+
+            parameterTypes[parameterCount] = parameterType;
+            parameterVariables[parameterCount] = parameterVariable;
+
+            if (this.tokens.peek() === ",") {
+                this.tokens.advance();
+                continue;
+            }
+
+            parameterCount++;
+            break;
+        }
+
+        // set parameter offsets
+        for (let i = 0; i < parameterCount; i++) {
+            parameterVariables[i].offset = i - parameterCount - 1;
+        }
+
+        this.expect(this.tokens.next(), ")");
+
+        const signature: FunctionSignature = {
+            module: null,
+            name,
+            return_type: type,
+            parameter_types: parameterTypes.slice(0, parameterCount)
+        };
+        this.ast.signatures.push(signature);
+
+        this.context.currentFunction = signature;
+
+        this.expect(this.tokens.next(), "{");
+
+        // todo: parse function body
+        // const body = this.parseBody();
+
+        this.expect(this.tokens.next(), "}");
+
+        const fun = new Function(signature, new Array(0));
+        this.ast.functions[name] = fun;
+
+        this.context.currentFunction = null;
+    }
+
+    parseType(token: string): Type | null {
+        switch (token) {
+            case "int":
+                return Type.INT;
+            case "float":
+                return Type.FLOAT;
+            case "string":
+                return Type.STRING;
+            case "void":
+                return Type.VOID;
+            default:
+                return null;
         }
     }
 
@@ -158,4 +273,42 @@ export class ParserException extends Error {
         this.line = line;
         this.column = column;
     }
+}
+
+export class ParserContext {
+
+    scopes: Scope[] = [];
+
+    currentFunction: FunctionSignature | null = null;
+
+    getCurrentScope(): Scope {
+        return this.scopes[this.scopes.length - 1];
+    }
+
+}
+
+export class Scope {
+
+    variables: Record<string, Variable> = {};
+
+    parameterVariables: Record<string, Variable> = {};
+
+    localVariables: Record<string, Variable> = {};
+
+    nextVariableOffset = 1;
+
+    createChild(copyLocals: boolean): Scope {
+        const child = new Scope();
+        for (const key in this.variables) {
+            child.variables[key] = this.variables[key];
+        }
+
+        if (copyLocals)
+            for (const key in this.variables) {
+                child.localVariables[key] = this.localVariables[key];
+            }
+
+        return child;
+    }
+
 }

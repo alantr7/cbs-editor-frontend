@@ -1,5 +1,4 @@
 import { Editor } from '@monaco-editor/react'
-import { editor as ed } from 'monaco-editor';
 import './main.css';
 import { useRef } from 'react';
 import type { CodeEditor, Monaco } from './editor/Monaco';

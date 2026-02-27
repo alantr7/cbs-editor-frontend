@@ -15,7 +15,7 @@ export function tokenize(input: string[]) {
         columns.push(tokenized[1]);
         lineNumbers.push(i + 1);
 
-        console.log("['" + tokenized.join("', '") + "']");
+        console.log("['" + tokenized[0].join("', '") + "']");
     }
 
     return new TokenQueue(lines, lineNumbers, columns)
