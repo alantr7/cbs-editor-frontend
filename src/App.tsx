@@ -49,6 +49,7 @@ function App() {
         }}
         defaultValue={defaultCode}
         beforeMount={handleEditorWillMount}
+        theme='vs-dark'
         onMount={handleEditorDidMount}
         onChange={handleEditorChangeContent} />
     </>

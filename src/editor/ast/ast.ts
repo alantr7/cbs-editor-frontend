@@ -170,11 +170,12 @@ export class While extends If {
 export class Literal extends Operand {
     static INT = 0;
     static FLOAT = 1;
+    static STRING = 5;
 
-    value: number;
+    value: number | string;
     type: number;
 
-    constructor(type: number, value: number) {
+    constructor(type: number, value: number | string) {
         super();
         this.type = type;
         this.value = value;

@@ -51,13 +51,21 @@ class Parser {
             name: "bot",
             functions: {
                 move: {
-                    module: null,
+                    module: "bot",
                     name: "move",
                     parameter_types: [
                         Type.INT,
                     ],
                     return_type: Type.INT
-                }
+                },
+                print: {
+                    module: "bot",
+                    name: "print",
+                    parameter_types: [
+                        Type.STRING,
+                    ],
+                    return_type: Type.STRING,
+                },
             }
         });
         this.context.scopes.push(new Scope());
@@ -215,7 +223,7 @@ class Parser {
 
         this.expect(this.tokens.next(), "}");
 
-        const fun = new Function(signature, new Array(0));
+        const fun = new Function(signature, body);
         this.ast.functions[name] = fun;
 
         this.context.currentFunction = null;
@@ -509,6 +517,9 @@ class Parser {
     }
 
     parseVariableAccessOrCall(): Operand {
+        if (this.tokens.peek()?.startsWith("\"") && this.tokens.peek()?.endsWith("\""))
+            return new Literal(Literal.STRING, this.tokens.peek()?.substring(1, this.tokens.next().length - 1) as string);
+
         let prefix = 0;
         let postfix = 0;
 
@@ -536,6 +547,8 @@ class Parser {
             }
             this.tokens.advance();
 
+            console.log('function call from module. module: ' + moduleName + ", fun: " + functionName);
+
             const fun = this.ast.signatures.find(s => s.name === functionName && moduleName === s.module) || null;
             if (fun === null)
                 throw new ParserException(functionName, 0, 0, "Unknown member '" + functionName + "'.");
@@ -547,6 +560,8 @@ class Parser {
                     this.tokens.advance();
                     break;
                 }
+
+                console.log('parsing argument ' + this.tokens.peek());
 
                 const argument = this.parseExpression();
                 args[argumentCount] = argument as Operand;
