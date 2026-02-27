@@ -25,6 +25,12 @@ export function setupIntellisense(monaco: Monaco) {
         brackets: [['{', '}']]
     });
 
+    // if statement snippet
+    registerSnippet(monaco, "i", "if", "if ($1) {\n\t$0\n};");
+    registerSnippet(monaco, "w", "while", "while ($1) {\n\t$0\n}");
+    registerSnippet(monaco, "d", "do", "do {\n\t$0\n} while ($1);");
+    registerSnippet(monaco, "f", "for", "for ($1; $2; $3) {\n\t$0\n}");
+
     // imported functions
     monaco.languages.registerCompletionItemProvider("cbs", {
         triggerCharacters: ["."],
@@ -49,6 +55,21 @@ export function setupIntellisense(monaco: Monaco) {
                 insertText: fn.completion,
                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
             }));
+            return { suggestions };
+        }
+    });
+}
+
+function registerSnippet(monaco: Monaco, trigger: string, label: string, text: string) {
+    monaco.languages.registerCompletionItemProvider("cbs", {
+        triggerCharacters: [trigger],
+        provideCompletionItems: function (model, position) {
+            const suggestions: any[] = [{
+                label: label,
+                kind: monaco.languages.CompletionItemKind.Snippet,
+                insertText: text,
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+            }];
             return { suggestions };
         }
     });
