@@ -1,6 +1,10 @@
 import * as monaco from 'monaco-editor';
+import { tokenize } from './tokenizer';
 
 export function buildAST(lines: string[]): BuildResult {
+    const tokens = tokenize(lines);
+
+
     return {
         ast: {},
         errors: []
@@ -23,4 +27,10 @@ export interface ParseError {
 
 export interface AST {
 
+}
+
+export interface FunctionSignature {
+    name: string,
+    return_type: string,
+    parameter_types: string[],
 }
