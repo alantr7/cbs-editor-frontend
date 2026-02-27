@@ -1,4 +1,4 @@
-import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, Function, If, Literal, Logical, Operand, Operator, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
+import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, Function, If, Literal, Logical, Operand, Operator, Ret, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
 import { ModuleRepository } from "./module-repository";
 import type { TokenQueue } from "./tokenizer";
 import * as monaco from 'monaco-editor';
@@ -255,8 +255,8 @@ class Parser {
         const nextToken = this.tokens.peek();
 
         if (!forInitExpr) {
-            /*
             switch (nextToken) {
+                /*
                 case "if":
                     return this.parseIf();
                 case "while":
@@ -265,12 +265,12 @@ class Parser {
                     return this.parseDoWhile();
                 case "for":
                     return this.parseFor();
+                */
                 case "return":
                     return this.parseReturn();
                 default:
                     break;
             }
-            */
         }
 
         this.tokens.advance();
@@ -599,6 +599,15 @@ class Parser {
         }
 
         throw new ParserException(nextToken, 0, 0, "Unknown member '" + nextToken + "'.");
+    }
+
+    parseReturn(): Ret {
+        this.tokens.advance();
+        const value = this.parseExpression();
+        if (value?.getResultType() !== this.context.currentFunction?.return_type)
+            throw new ParserException("", 0, 0, "Type mismatch: can not convert '" + value?.getResultType() + "' to '" + this.context.currentFunction?.return_type + "'.");
+
+        return new Ret(value as Operand);
     }
 
     parseOperator(raw: string): Operand | null {

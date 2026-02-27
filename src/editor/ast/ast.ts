@@ -188,7 +188,7 @@ export class Literal extends Operand {
         return true;
     }
     getResultType(): Type {
-        return this.type == Literal.INT ? Type.INT : Type.FLOAT;
+        return this.type == Literal.INT ? Type.INT : this.type === Literal.FLOAT ? Type.FLOAT : Type.STRING;
     }
 }
 
@@ -377,6 +377,24 @@ export class Call extends Operand {
     }
     getResultType(): Type {
         return this.fun.return_type;
+    }
+}
+
+export class Ret extends StmtExpr {
+    value: Operand;
+    constructor(value: Operand) {
+        super();
+        this.value = value;
+    }
+
+    isExpression(): boolean {
+        return false;
+    }
+    isStatement(): boolean {
+        return true;
+    }
+    getResultType(): Type {
+        return this.value.getResultType();
     }
 }
 
