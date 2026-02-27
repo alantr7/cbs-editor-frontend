@@ -3,19 +3,22 @@ import { isOperator, isUnaryOperator } from "./parser";
 export function tokenize(input: string[]) {
     const lines: string[][] = [];
     const lineNumbers: number[] = [];
+    const columns: number[][] = [];
+
     for (let i = 0; i < input.length; i++) {
         const line = input[i];
         const tokenized = tokenizeLine(line);
-        if (tokenized.length == 0)
+        if (tokenized[0].length == 0)
             continue;
 
-        lines.push(tokenized);
+        lines.push(tokenized[0]);
+        columns.push(tokenized[1]);
         lineNumbers.push(i + 1);
 
         console.log("['" + tokenized.join("', '") + "']");
     }
 
-    return new TokenQueue(lines, lineNumbers)
+    return new TokenQueue(lines, lineNumbers, columns)
 }
 
 const SYMBOLS = " ()[]{}<>=!,.\n+-?*/&|;";
@@ -23,8 +26,9 @@ function isSymbol(ch: string) {
     return SYMBOLS.includes(ch);
 }
 
-function tokenizeLine(line: string): string[] {
+function tokenizeLine(line: string): [string[], number[]] {
     const tokens: string[] = [];
+    const columns: number[] = [];
     let quotes = false;
     let start = 0;
 
@@ -33,6 +37,7 @@ function tokenizeLine(line: string): string[] {
         if (character == '"') {
             if (quotes) {
                 tokens.push(line.substring(start, i + 1));
+                columns.push(start);
                 start = i + 1;
             }
             quotes = !quotes;
@@ -81,12 +86,15 @@ function tokenizeLine(line: string): string[] {
                     }
                 }
                 tokens.push(token);
+                columns.push(start);
             }
 
             start = i + 1;
 
-            if (character != ' ' && !isOperator(token) && !isUnaryOperator(token))
+            if (character != ' ' && !isOperator(token) && !isUnaryOperator(token)) {
                 tokens.push(character);
+                columns.push(start);
+            }
         }
     }
 
@@ -94,15 +102,70 @@ function tokenizeLine(line: string): string[] {
     if (last.trim().length !== 0)
         tokens.push(last);
 
-    return tokens;
+    return [ tokens, columns ];
 }
 
 export class TokenQueue {
-    public readonly lines: string[][];
-    public readonly lineNumbers: number[];
+    public readonly queue: string[][];
+    public readonly lines: number[];
+    public readonly columns: number[][];
+    public row: number = 0;
+    public col: number = 0;
 
-    constructor(lines: string[][], lineNumbers: number[]) {
-        this.lines = lines;
-        this.lineNumbers = lineNumbers;
+    constructor(lines: string[][], lineNumbers: number[], columns: number[][]) {
+        this.queue = lines;
+        this.lines = lineNumbers;
+        this.columns = columns;
+
+        if (lines[0].length === 0)
+            this.advance();
     }
+
+    peek(): string | null {
+        if (this.isEmpty())
+            return null;
+
+        return this.queue[this.row][this.col];
+    }
+
+    next(): string {
+        const token = this.queue[this.row][this.col];
+        this.advance();
+
+        return token;
+    }
+
+    rollback(): void {
+        this.col--;
+
+        if (this.col < 0) {
+            this.row--;
+            this.col = this.queue[this.row].length - 1;
+        }
+    }
+
+    advance(): void {
+        this.col++;
+
+        if (this.col >= this.queue[this.row].length) {
+            this.row++;
+            this.col = 0;
+        }
+
+        if (!this.isEmpty() && this.queue[this.row].length == 0)
+            this.advance();
+    }
+
+    getLine(): number {
+        return this.lines[this.row];
+    }
+
+    getColumn(): number {
+        return this.columns[this.row][this.col];
+    }
+
+    isEmpty(): boolean {
+        return this.row >= this.queue.length;
+    }
+
 }
