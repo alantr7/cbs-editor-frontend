@@ -10,7 +10,7 @@ const defaultCode = `
 import bot;
 
 int main() {
-    
+   
 }
 `.trim();
 
@@ -22,6 +22,11 @@ function App() {
     monaco.languages.register({id: "cbs"});
     setupHighlighting(monaco);
     setupIntellisense(monaco);
+    monaco.typescript.typescriptDefaults.setEagerModelSync(false);
+    monaco.typescript.typescriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: true,
+    });
   }
 
   function handleEditorDidMount(editor: CodeEditor, monaco: Monaco) {
@@ -43,6 +48,7 @@ function App() {
         width="100vw"
         defaultLanguage="cbs"
         options={{
+          minimap: { enabled: false },
           suggest: {
             showWords: false,
           },
