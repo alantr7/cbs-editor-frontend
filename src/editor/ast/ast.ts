@@ -167,6 +167,32 @@ export class While extends If {
     }
 }
 
+export class For extends StmtExpr {
+    init: StmtExpr | null;
+    condition: Operand | null;
+    update: Operand | null;
+    body: StmtExpr[];
+
+    constructor(init: StmtExpr | null, condition: Operand | null, update: Operand | null, body: StmtExpr[]) {
+        super();
+        this.init = init;
+        this.condition = condition;
+        this.update = update;
+        this.body = body;
+    }
+
+    isExpression(): boolean {
+        return false;
+    }
+    isStatement(): boolean {
+        return true;
+    }
+    getResultType(): Type {
+        // SHOULD NOT HAPPEN!
+        return Type.VOID;
+    }
+}
+
 export class Literal extends Operand {
     static INT = 0;
     static FLOAT = 1;

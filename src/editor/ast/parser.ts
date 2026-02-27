@@ -1,4 +1,4 @@
-import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, Function, If, Literal, Logical, Operand, Operator, Ret, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
+import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, For, Function, If, Literal, Logical, Operand, Operator, Ret, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
 import { ModuleRepository } from "./module-repository";
 import type { TokenQueue } from "./tokenizer";
 import * as monaco from 'monaco-editor';
@@ -242,7 +242,7 @@ class Parser {
             if (statement === null)
                 break;
 
-            if (!(statement instanceof If) || (statement instanceof While && (statement as While).isDoWhile))
+            if ((!(statement instanceof If) && !(statement instanceof For)) || (statement instanceof While && (statement as While).isDoWhile))
                 this.expect(this.tokens.next(), ";");
 
             body[statementCount] = statement;
@@ -262,10 +262,8 @@ class Parser {
                     return this.parseWhile();
                 case "do":
                     return this.parseDoWhile();
-                        /*
                 case "for":
                     return this.parseFor();
-                */
                 case "return":
                     return this.parseReturn();
                 default:
@@ -664,6 +662,27 @@ class Parser {
         this.expect(this.tokens.next(), ")");
 
         return new While(condition as Operand, body, true);
+    }
+
+    parseFor(): For {
+        this.tokens.advance();
+        this.expect(this.tokens.next(), "(");
+
+        const init = this.tokens.peek() === ";" ? null : this.parseStatement(true);
+
+        this.expect(this.tokens.next(), ";");
+
+        const condition = this.parseExpression();
+        this.expect(this.tokens.next(), ";");
+
+        const update = this.parseExpression();
+
+        this.expect(this.tokens.next(), ")");
+        this.expect(this.tokens.next(), "{");
+        const body = this.parseBody();
+        this.expect(this.tokens.next(), "}");
+
+        return new For(init, condition, update, body);
     }
 
     parseOperator(raw: string): Operand | null {
