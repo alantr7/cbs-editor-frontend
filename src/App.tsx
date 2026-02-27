@@ -45,7 +45,8 @@ function App() {
         options={{
           suggest: {
             showWords: false,
-          }
+          },
+          tabSize: 3,
         }}
         defaultValue={defaultCode}
         beforeMount={handleEditorWillMount}
