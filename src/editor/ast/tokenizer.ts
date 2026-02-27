@@ -6,7 +6,7 @@ export function tokenize(input: string[]) {
     const columns: number[][] = [];
 
     for (let i = 0; i < input.length; i++) {
-        const line = input[i];
+        const line = input[i].trim();
         const tokenized = tokenizeLine(line);
         if (tokenized[0].length == 0)
             continue;
@@ -49,9 +49,9 @@ function tokenizeLine(line: string): [string[], number[]] {
         if (isSymbol(character)) {
             let token: string | null = null;
 
-            if (character == '=' && tokens[tokens.length - 1] != null) {
+            if (character == '=' && tokens[tokens.length - 1] !== undefined) {
                 const multicharSymbols = "<>=!";
-                if (multicharSymbols.includes(tokens.pop() as string)) {
+                if (multicharSymbols.includes(tokens[tokens.length - 1] as string)) {
                     token = tokens.pop() + character;
                 }
             }
@@ -69,14 +69,14 @@ function tokenizeLine(line: string): [string[], number[]] {
                 }
             }
 
-            if (token == null) {
+            if (token === null) {
                 token = line.substring(start, i);
             }
 
             if (token.trim().length !== 0) {
                 // Check if it's a negative number
                 // todo: verify if works correctly!
-                if (token.match(/$\d+$/) && tokens.length > 1) {
+                if (token.match(/^\d+$/) && tokens.length > 1) {
                     const previous = tokens[tokens.length - 1];
                     const previous2 = tokens[tokens.length - 2];
 
@@ -91,7 +91,7 @@ function tokenizeLine(line: string): [string[], number[]] {
 
             start = i + 1;
 
-            if (character != ' ' && !isOperator(token) && !isUnaryOperator(token)) {
+            if (character !== ' ' && !isOperator(token) && !isUnaryOperator(token)) {
                 tokens.push(character);
                 columns.push(start);
             }
@@ -161,7 +161,7 @@ export class TokenQueue {
     }
 
     getColumn(): number {
-        return this.columns[this.row][this.col];
+        return (this.columns[this.row] || [0])[this.col] || 0;
     }
 
     isEmpty(): boolean {

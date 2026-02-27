@@ -32,6 +32,7 @@ function App() {
   }
 
   function handleEditorChangeContent(value: string | undefined, ev: any) {
+    console.clear();
     validate(editorRef.current as CodeEditor, monacoRef.current as Monaco);
   }
 

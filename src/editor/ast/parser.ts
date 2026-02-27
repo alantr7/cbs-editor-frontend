@@ -1,4 +1,4 @@
-import { Function, Type, Variable, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
+import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, Function, If, Literal, Logical, Operand, Operator, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
 import { ModuleRepository } from "./module-repository";
 import type { TokenQueue } from "./tokenizer";
 import * as monaco from 'monaco-editor';
@@ -85,7 +85,6 @@ class Parser {
                 else {
                     // try to find out if it's a variable or a function
                     this.parseFunctionOrVariable();
-                    break;
                 }
             }
         } catch (e: any) {
@@ -149,8 +148,7 @@ class Parser {
             return;
         }
         if (differentiator === "=" || differentiator === ";") {
-            // todo:
-            // this.parseVariableDeclare(type, name);
+            this.parseVariableDeclare(type, name);
             return;
         }
     }
@@ -213,7 +211,7 @@ class Parser {
         this.expect(this.tokens.next(), "{");
 
         // todo: parse function body
-        // const body = this.parseBody();
+        const body = this.parseBody();
 
         this.expect(this.tokens.next(), "}");
 
@@ -221,6 +219,388 @@ class Parser {
         this.ast.functions[name] = fun;
 
         this.context.currentFunction = null;
+    }
+
+    parseBody(): StmtExpr[] {
+        const body = new Array(128);
+        let statementCount = 0;
+
+        console.log('parsing body.');
+        for (; statementCount < body.length; statementCount++) {
+            if (this.tokens.peek() === "}")
+                break;
+
+            const statement = this.parseStatement();
+            if (statement === null)
+                break;
+
+            if (!(statement instanceof If) || (statement instanceof While && (statement as While).isDoWhile))
+                this.expect(this.tokens.next(), ";");
+
+            body[statementCount] = statement;
+        }
+
+        return body.slice(0, statementCount);
+    }
+
+    parseStatement(forInitExpr: boolean = false): StmtExpr | null {
+        const nextToken = this.tokens.peek();
+
+        if (!forInitExpr) {
+            /*
+            switch (nextToken) {
+                case "if":
+                    return this.parseIf();
+                case "while":
+                    return this.parseWhile();
+                case "do":
+                    return this.parseDoWhile();
+                case "for":
+                    return this.parseFor();
+                case "return":
+                    return this.parseReturn();
+                default:
+                    break;
+            }
+            */
+        }
+
+        this.tokens.advance();
+
+        // variable declare
+        const parameterType = this.parseType(nextToken as string);
+        if (parameterType != null) {
+            return this.parseVariableDeclare(parameterType, this.tokens.next());
+        }
+
+        console.log('next token: ' + this.tokens.peek());
+
+        // variable assign
+        if (this.tokens.peek() === "=") {
+            this.tokens.advance();
+
+            return this.parseVariableAssign(nextToken as string);
+        }
+
+        this.tokens.rollback();
+
+        const expression = this.parseExpression();
+        if (expression?.isStatement())
+            return expression;
+
+        throw new ParserException("", this.tokens.getLine(), this.tokens.getColumn(), "Can not use " + expression + " as a statement.");
+    }
+
+    parseVariableDeclare(type: Type, name: string): Declare | null {
+        let initialValue: Operand | null;
+        // no assignment
+        if (this.tokens.peek() === ";") {
+            // todo: arrays
+            initialValue = null;
+        }
+        else if (this.tokens.peek() === "=") {
+            this.tokens.advance();
+            initialValue = this.parseExpression();
+
+            if (type != initialValue?.getResultType()) {
+                if (type == Type.FLOAT && initialValue?.getResultType() == Type.INT)
+                    initialValue = new Cast(initialValue, Type.FLOAT);
+                else
+                    throw new ParserException(initialValue!.getResultType().name, this.tokens.getLine(), this.tokens.getColumn(), "Type mismatch: can not convert '" + initialValue?.getResultType() + "' to '" + type + "'.");
+            }
+        }
+        else return null;
+
+        if (this.context.getCurrentScope().localVariables[name]) {
+            this.tokens.rollback();
+            throw new ParserException(name, this.tokens.getLine(), this.tokens.getColumn(), "Variable with name '" + name + "' already exists in this scope.");
+        }
+
+        const variable = new Variable(type, this.context.scopes.length === 1, this.context.getCurrentScope().nextVariableOffset++, 1);
+        this.context.getCurrentScope().variables[name] = variable;
+        this.context.getCurrentScope().localVariables[name] = variable;
+        return new Declare(type, initialValue, [ 1 ]);
+    }
+
+    parseVariableAssign(name: string) {
+        const value = this.parseExpression();
+        const variable = this.context.getCurrentScope().variables[name];
+
+        if (variable == null)
+            throw new ParserException(name, this.tokens.getLine(), this.tokens.getColumn(), "Unknown variable '" + name + "'.");
+
+        if (value && variable.type != value.getResultType())
+            throw new ParserException(value.getResultType().name, this.tokens.getLine(), this.tokens.getColumn(), "Type mismatch: can not convert '" + value.getResultType() + "' to '" + variable.type + "'.");
+
+        return new Assign(variable, new Array(0), value as StmtExpr);
+    }
+
+    parseExpression(): StmtExpr | null {
+        let j = 0;
+        const stack: string[] = [];
+        const postfix: Operand[] = [];
+
+        stack.push("#");
+
+        let expectsOperator = false;
+        let parenthesisOpen = 0;
+
+        while (!this.tokens.isEmpty()) {
+            const next = this.tokens.peek() as string;
+            this.tokens.advance();
+
+            if (expectsOperator && !isOperator(next)) {
+                this.tokens.rollback();
+                break;
+            }
+
+            if (next === ")" && parenthesisOpen === 0) {
+                this.tokens.rollback();
+                break;
+            }
+
+            if (next === ";") {
+                this.tokens.rollback();
+                break;
+            }
+
+            // TODO: Used !isOperator before, it must support parenthesis!
+            if (isNumber(next)) {
+                postfix.push(new Literal(Literal.INT, parseInt(next)));
+                j++;
+
+                expectsOperator = true;
+            }
+
+            else if (isCastOperator(next)) {
+                postfix.push(new Cast(this.parseExpression() as StmtExpr, next === "(int)" ? Type.INT : Type.FLOAT));
+            }
+
+            // todo: should i do null? probs not
+//            else if (ParserHelper.isNull(next)) {
+//                postfix.add(new LiteralExpression("null", LiteralExpression.NULL));
+//                j++;
+//
+//                expectsOperator = true;
+//            }
+            else if (isOperator(next)) {
+                if (next === "(") {
+                    stack.push(next);
+                    parenthesisOpen++;
+//                }
+                } else {
+                    if (next === ")") {
+                        if (stack.length === 0)
+                            return null;
+
+                        while (stack[stack.length - 1] !== "(") {
+                            const popInParenthesis = stack.pop();
+                            // second argument was a string in old code. if this breaks that's the cause
+                            const operator = this.parseOperator(popInParenthesis as string);
+                            postfix.push(operator != null ? operator : new Literal(Literal.INT, parseInt(popInParenthesis as string)));
+                            j++;
+                        }
+
+                        parenthesisOpen--;
+                        stack.pop(); // pop out '('
+                    } else {
+
+                        if (getPrecedence(next) > getPrecedence(stack[stack.length - 1])) {
+                            stack.push(next);
+                        } else {
+                            while (getPrecedence(next) <= getPrecedence(stack[stack.length - 1])) {
+                                // todo: operator might be ( or ) but i highly doubt it
+                                postfix.push(this.parseOperator(stack.pop() as string) as Operand);
+                                j++;
+                            }
+
+                            stack.push(next);
+                        }
+
+                        expectsOperator = false;
+//                    }
+//                }
+                    }
+                }
+            } else {
+
+                // Check if it's a record instantiation
+//                if (next.equals("new")) {
+//                    var recordInstantiate = nextRecordInstantiate();
+//                    if (recordInstantiate == null)
+//                        break;
+//
+//                    expectsOperator = true;
+//                    postfix.add(recordInstantiate);
+//                    continue;
+//                }
+//
+                 // can not mix strings with numbers here!
+//                if (next.startsWith("\"") && next.endsWith("\"")) {
+//                    postfix.add(new Literal(next.substring(1, next.length() - 1), LiteralExpression.STRING));
+//                } else {
+                    this.tokens.rollback();
+
+                    // todo: function calls or array access
+                    const memberAccess = this.parseVariableAccessOrCall();
+                    if (memberAccess == null) {
+                        break;
+                    } else {
+                        postfix.push(memberAccess);
+                    }
+//                }
+
+                expectsOperator = true;
+
+            }
+        }
+
+        while (stack[stack.length - 1] !== "#") {
+            const pop = stack.pop();
+            postfix.push(this.parseOperator(pop as string) as Operand);
+            j++;
+        }
+
+        for (let i = 0; i < postfix.length; i++) {
+            const operand = postfix[i];
+            if (operand instanceof Operator) {
+                const operator = operand as Operator;
+
+                // consume two literals
+                const prev2 = postfix.pop();
+                const prev1 = postfix.pop();
+
+                // todo: check if operation can be performed on these two operands
+                postfix.splice(i, 1);
+
+                if (operator.type >= 30) {
+                    if (!(prev1 instanceof Access))
+                        // todo: find location of this in code
+                        throw new ParserException("", 0, 0, "Can not assign to non variable.");
+
+                    const access = prev1 as Access;
+                    postfix.splice(i, 0, new Assign(access.variable, new Array(0), prev2 as Operand));
+                }
+                else if (operator.type >= 20) {
+                    postfix.splice(i, 0, new Compare(prev1 as Operand, operator.type, prev2 as Operand));
+                }
+                else if (operator.type >= 10) {
+                    postfix.splice(i, 0, new Logical([ prev1 as Operand, operator, prev2 as Operand ]));
+                } else {
+                    if (prev1?.getResultType() == Type.STRING || prev2?.getResultType() == Type.STRING) {
+                        if (operator.type != Operator.ADD.type)
+                            // todo: find location of this in code
+                            throw new ParserException("", 0, 0, "Invalid operation on string.");
+
+                        postfix.splice(i, 0, new Concat(prev1 as Operand, prev2 as Operand));
+                    } else {
+                        postfix.splice(i, 0, new Arithmetic([ prev1 as Operand, prev2 as Operand, operator ]));
+                    }
+                }
+            }
+        }
+
+        return postfix[0];
+    }
+
+    parseVariableAccessOrCall(): Operand {
+        let prefix = 0;
+        let postfix = 0;
+
+        if (this.tokens.peek() === "++") {
+            this.tokens.advance();
+            prefix = Unary.PREFIX_INCREMENT;
+        }
+        else if (this.tokens.peek() === "--") {
+            this.tokens.advance();
+            prefix = Unary.PREFIX_DECREMENT;
+        }
+
+        const nextToken = this.tokens.next();
+        if ((prefix == 0) && (this.tokens.peek() === "(") || this.tokens.peek() === ".") {
+            let moduleName: string | null;
+            let functionName: string | null;
+            if (this.tokens.peek() === ".") {
+                this.tokens.advance();
+                moduleName = nextToken;
+                functionName = this.tokens.next();
+                this.expect(this.tokens.peek() as string, "(");
+            } else {
+                moduleName = null;
+                functionName = nextToken;
+            }
+            this.tokens.advance();
+
+            const fun = this.ast.signatures.find(s => s.name === functionName && moduleName === s.module) || null;
+            if (fun === null)
+                throw new ParserException(functionName, 0, 0, "Unknown member '" + functionName + "'.");
+
+            const args: Operand[] = new Array(8);
+            let argumentCount = 0;
+            for (; argumentCount < args.length; argumentCount++) {
+                if (this.tokens.peek() === ")") {
+                    this.tokens.advance();
+                    break;
+                }
+
+                const argument = this.parseExpression();
+                args[argumentCount] = argument as Operand;
+
+                if (this.tokens.peek() === ")") {
+                    this.tokens.advance();
+                    argumentCount++;
+                    break;
+                }
+                this.expect(this.tokens.next(), ",");
+            }
+
+            return new Call(fun, args.slice(0, argumentCount));
+        }
+        else {
+            const variable = this.context.getCurrentScope().variables[nextToken];
+            if (prefix == 0) {
+                if (this.tokens.peek() === "++") {
+                    // is postfix
+                    this.tokens.advance();
+                    postfix = Unary.POSTFIX_INCREMENT;
+                }
+                else if (this.tokens.peek() === "--") {
+                    this.tokens.advance();
+                    postfix = Unary.POSTFIX_DECREMENT;
+                }
+            }
+
+            if (variable != null) {
+                if ((prefix | postfix) != 0) {
+                    return new Unary(new Access(variable, new Array(0)), (prefix | postfix));
+                }
+                return new Access(variable, new Array(0));
+            }
+        }
+
+        throw new ParserException(nextToken, 0, 0, "Unknown member '" + nextToken + "'.");
+    }
+
+    parseOperator(raw: string): Operand | null {
+        switch (raw) {
+            case "+": return Operator.ADD;
+            case "-": return Operator.SUB;
+            case "*": return Operator.MUL;
+            case "/": return Operator.DIV;
+
+            case "&&": return Operator.AND;
+            case "||": return Operator.OR;
+
+            case "==": return Operator.EQUALS;
+            case "!=": return Operator.NOT_EQUALS;
+            case "<" : return Operator.LESS_THAN;
+            case "<=": return Operator.LESS_EQUALS;
+            case ">": return Operator.GREATER_THAN;
+            case ">=": return Operator.GREATER_EQUALS;
+
+            case "=": return Operator.ASSIGN;
+            default: return null;
+        };
     }
 
     parseType(token: string): Type | null {
@@ -260,6 +640,28 @@ export function isNumber(input: string): boolean {
 
 export function isBoolean(input: string): boolean {
     return input === "true" || input === "false";
+}
+
+export function getPrecedence(input: string) {
+    switch (input) {
+        case "(":
+        case ")":
+        case "#": return 1; // was 1
+        case "=": return 2; // maybe above NEEDS to be 1. check if breaks
+        case "||": return 3;
+        case "&&": return 4;
+        case "<":
+        case ">":
+        case "==":
+        case "!=":
+        case "<=":
+        case ">=": return 7;
+        case "+":
+        case "-": return 8;
+        case "*":
+        case "/": return 9;
+        default: return 0;
+    };
 }
 
 export class ParserException extends Error {
