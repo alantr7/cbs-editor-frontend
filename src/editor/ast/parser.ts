@@ -258,11 +258,11 @@ class Parser {
             switch (nextToken) { 
                 case "if":
                     return this.parseIf();
-                /*
                 case "while":
                     return this.parseWhile();
                 case "do":
                     return this.parseDoWhile();
+                        /*
                 case "for":
                     return this.parseFor();
                 */
@@ -636,6 +636,34 @@ class Parser {
             this.expect(this.tokens.next(), "}");
             return new If(condition, body, new If(null, elseBody, null));
         }
+    }
+
+    parseWhile(): While {
+        this.tokens.advance();
+        this.expect(this.tokens.next(), "(");
+
+        const condition = this.parseExpression();
+
+        this.expect(this.tokens.next(), ")");
+        this.expect(this.tokens.next(), "{");
+        const body = this.parseBody();
+        this.expect(this.tokens.next(), "}");
+
+        return new While(condition as Operand, body);
+    }
+
+    parseDoWhile(): While {
+        this.tokens.advance();
+        this.expect(this.tokens.next(), "{");
+        const body = this.parseBody();
+        this.expect(this.tokens.next(), "}");
+
+        this.expect(this.tokens.next(), "while");
+        this.expect(this.tokens.next(), "(");
+        const condition = this.parseExpression();
+        this.expect(this.tokens.next(), ")");
+
+        return new While(condition as Operand, body, true);
     }
 
     parseOperator(raw: string): Operand | null {

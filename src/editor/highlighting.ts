@@ -4,7 +4,7 @@ export function setupHighlighting(monaco: Monaco) {
     monaco.languages.setMonarchTokensProvider("cbs", {
 	tokenizer: {
 		root: [
-			[/\b(int|float|if|else|return|import|void|string|struct)\b/, "keyword"],
+			[/\b(int|float|if|else|return|import|void|string|struct|while|do)\b/, "keyword"],
 			[/[A-Za-z_]\w*/, "identifier"],
 			[/\d+/, "number"],
 			[/".*?"/, "string"],
