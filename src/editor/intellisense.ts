@@ -16,6 +16,16 @@ const ast: Record<string, Record<string, Record<string, any[]>>> = {
 };
 
 export function setupIntellisense(monaco: Monaco) {
+    monaco.languages.setLanguageConfiguration("cbs", {
+        autoClosingPairs: [
+            { open: "(", close: ")" },
+            { open: "[", close: "]" },
+            { open: "{", close: "}" },
+        ],
+        brackets: [['{', '}']]
+    });
+
+    // imported functions
     monaco.languages.registerCompletionItemProvider("cbs", {
         triggerCharacters: ["."],
         provideCompletionItems: function (model, position) {
