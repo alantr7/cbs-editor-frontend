@@ -255,10 +255,10 @@ class Parser {
         const nextToken = this.tokens.peek();
 
         if (!forInitExpr) {
-            switch (nextToken) {
-                /*
+            switch (nextToken) { 
                 case "if":
                     return this.parseIf();
+                /*
                 case "while":
                     return this.parseWhile();
                 case "do":
@@ -608,6 +608,34 @@ class Parser {
             throw new ParserException("", 0, 0, "Type mismatch: can not convert '" + value?.getResultType() + "' to '" + this.context.currentFunction?.return_type + "'.");
 
         return new Ret(value as Operand);
+    }
+
+    parseIf(): If {
+        this.tokens.advance();
+        this.expect(this.tokens.next(), "(");
+
+        const condition = this.parseExpression();
+
+        this.expect(this.tokens.next(), ")");
+        this.expect(this.tokens.next(), "{");
+
+        const body = this.parseBody();
+
+        this.expect(this.tokens.next(), "}");
+
+        if (this.tokens.peek() !== "else") {
+            return new If(condition, body, null);
+        }
+
+        this.tokens.advance();
+        if (this.tokens.peek() === "if") {
+            return new If(condition, body, this.parseIf());
+        } else {
+            this.expect(this.tokens.next(), "{");
+            const elseBody = this.parseBody();
+            this.expect(this.tokens.next(), "}");
+            return new If(condition, body, new If(null, elseBody, null));
+        }
     }
 
     parseOperator(raw: string): Operand | null {

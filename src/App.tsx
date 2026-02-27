@@ -28,7 +28,7 @@ function App() {
     monacoRef.current = monaco;
     editorRef.current = editor;
     editor.focus();
-    editor.setPosition({lineNumber: 4, column: 5});
+    editor.setPosition({lineNumber: 4, column: 4});
   }
 
   function handleEditorChangeContent(value: string | undefined, ev: any) {
