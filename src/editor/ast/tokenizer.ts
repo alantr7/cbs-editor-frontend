@@ -6,7 +6,7 @@ export function tokenize(input: string[]) {
     const columns: number[][] = [];
 
     for (let i = 0; i < input.length; i++) {
-        const line = input[i].trim();
+        const line = input[i];
         const tokenized = tokenizeLine(line);
         if (tokenized[0].length == 0)
             continue;
@@ -27,6 +27,8 @@ function isSymbol(ch: string) {
 }
 
 function tokenizeLine(line: string): [string[], number[]] {
+    const columnsOffset = line.length - line.trimStart().length;
+    line = line.trim();
     const tokens: string[] = [];
     const columns: number[] = [];
     let quotes = false;
@@ -43,7 +45,7 @@ function tokenizeLine(line: string): [string[], number[]] {
         if (character == '"') {
             if (quotes) {
                 tokens.push(line.substring(start, i + 1));
-                columns.push(start);
+                columns.push(start + columnsOffset);
                 start = i + 1;
             }
             quotes = !quotes;
@@ -92,19 +94,19 @@ function tokenizeLine(line: string): [string[], number[]] {
                     }
                 }
                 tokens.push(token);
-                columns.push(start);
+                columns.push(start + columnsOffset);
             }
 
             start = i + 1;
 
             if (character !== ' ' && !isOperator(token) && !isUnaryOperator(token)) {
                 tokens.push(character);
-                columns.push(start);
+                columns.push(start + columnsOffset);
             }
         }
     }
 
-    var last = line.substring(start);
+    const last = line.substring(start);
     if (last.trim().length !== 0)
         tokens.push(last);
 

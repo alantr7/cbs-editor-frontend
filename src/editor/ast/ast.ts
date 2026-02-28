@@ -59,6 +59,8 @@ export class Variable {
 }
 
 export abstract class StmtExpr {
+    column: number = 0;
+    length: number = 0;
     abstract isStatement(): boolean;
     abstract isExpression(): boolean;
     abstract getResultType(): Type;

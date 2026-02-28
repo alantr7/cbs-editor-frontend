@@ -258,6 +258,7 @@ class Parser {
     }
 
     parseStatement(forInitExpr: boolean = false): StmtExpr | null {
+        const tokenColumn = this.tokens.getColumn();
         const nextToken = this.tokens.peek();
 
         if (!forInitExpr) {
@@ -297,10 +298,12 @@ class Parser {
         this.tokens.rollback();
 
         const expression = this.parseExpression();
-        if (expression?.isStatement())
+        if (expression?.isStatement()) {
+            expression!.column = tokenColumn;
             return expression;
+        }
 
-        throw new ParserException("", this.tokens.getLine(), this.tokens.getColumn(), "Can not use " + expression + " as a statement.");
+        throw new ParserException("", this.tokens.getLine(), tokenColumn, "Can not use " + expression + " as a statement.");
     }
 
     parseVariableDeclare(type: Type, name: string): Declare | null {
@@ -312,13 +315,16 @@ class Parser {
         }
         else if (this.tokens.peek() === "=") {
             this.tokens.advance();
+            const tokenColumn = this.tokens.getColumn();
             initialValue = this.parseExpression();
 
             if (type != initialValue?.getResultType()) {
-                if (type == Type.FLOAT && initialValue?.getResultType() == Type.INT)
+                if (type == Type.FLOAT && initialValue?.getResultType() == Type.INT) {
                     initialValue = new Cast(initialValue, Type.FLOAT);
-                else
-                    throw new ParserException(initialValue!.getResultType().name, this.tokens.getLine(), this.tokens.getColumn(), "Type mismatch: can not convert '" + initialValue?.getResultType() + "' to '" + type + "'.");
+                    initialValue.column = tokenColumn;
+                } else {
+                    throw new ParserException(" ", this.tokens.getLine(), tokenColumn, "Type mismatch: can not convert '" + initialValue?.getResultType().name + "' to '" + type.name + "'.");
+                }
             }
         }
         else return null;
@@ -536,6 +542,8 @@ class Parser {
             prefix = Unary.PREFIX_DECREMENT;
         }
 
+        const tokenColumn = this.tokens.getColumn();
+        const tokenLine = this.tokens.getLine();
         const nextToken = this.tokens.next();
         if ((prefix == 0) && (this.tokens.peek() === "(") || this.tokens.peek() === ".") {
             let moduleName: string | null;
@@ -551,11 +559,9 @@ class Parser {
             }
             this.tokens.advance();
 
-            console.log('function call from module. module: ' + moduleName + ", fun: " + functionName);
-
             const fun = this.ast.signatures.find(s => s.name === functionName && moduleName === s.module) || null;
             if (fun === null)
-                throw new ParserException(functionName, 0, 0, "Unknown member '" + functionName + "'.");
+                throw new ParserException(functionName, tokenLine, tokenColumn, "Function '" + functionName + "' does not exist.");
 
             const args: Operand[] = new Array(8);
             let argumentCount = 0;
@@ -602,7 +608,7 @@ class Parser {
             }
         }
 
-        throw new ParserException(nextToken, 0, 0, "Unknown member '" + nextToken + "'.");
+        throw new ParserException(nextToken, tokenLine, tokenColumn, "Variable '" + nextToken + "' does not exist.");
     }
 
     parseReturn(): Ret {

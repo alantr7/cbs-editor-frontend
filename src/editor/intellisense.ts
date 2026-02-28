@@ -27,7 +27,7 @@ export function setupIntellisense(monaco: Monaco) {
     });
 
     // if statement snippet
-    registerSnippet(monaco, "i", "if", "if ($1) {\n\t$0\n};");
+    registerSnippet(monaco, "i", "if", "if ($1) {\n\t$0\n}");
     registerSnippet(monaco, "w", "while", "while ($1) {\n\t$0\n}");
     registerSnippet(monaco, "d", "do", "do {\n\t$0\n} while ($1);");
     registerSnippet(monaco, "f", "for", "for ($1; $2; $3) {\n\t$0\n}");
@@ -68,7 +68,7 @@ function registerSnippet(monaco: Monaco, trigger: string, label: string, text: s
         provideCompletionItems: function (model, position) {
             const suggestions: any[] = [{
                 label: label,
-                kind: monaco.languages.CompletionItemKind.Snippet,
+                kind: monaco.languages.CompletionItemKind.Keyword,
                 insertText: text,
                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
             }];
