@@ -60,6 +60,20 @@ export function setupIntellisense(monaco: Monaco) {
             return { suggestions };
         }
     });
+
+    // pressing ctrl + space. modules + variable names + functions
+    monaco.languages.registerCompletionItemProvider("cbs", {
+        triggerCharacters: [],
+        provideCompletionItems: function () {
+            const suggestions: any[] = Object.keys(ast.modules).map(m => ({
+                label: m,
+                kind: monaco.languages.CompletionItemKind.Module,
+                insertText: m + ".",
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+            }));
+            return { suggestions };
+        }
+    });
 }
 
 function registerSnippet(monaco: Monaco, trigger: string, label: string, text: string) {
