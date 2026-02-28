@@ -330,6 +330,8 @@ class Parser {
 
     parseVariableDeclare(type: Type, name: string): Declare | null {
         let initialValue: Operand | null;
+        const tokenLine = this.tokens.getPrevLine();
+        const tokenColumn = this.tokens.getPrevColumn();
         // no assignment
         if (this.tokens.peek() === ";") {
             // todo: arrays
@@ -353,7 +355,7 @@ class Parser {
 
         if (this.context.getCurrentScope().localVariables[name]) {
             this.tokens.rollback();
-            throw new ParserException(name, this.tokens.getLine(), this.tokens.getColumn(), "Variable with name '" + name + "' already exists in this scope.");
+            throw new ParserException(name, tokenLine, tokenColumn, "Variable with name '" + name + "' already exists in this scope.");
         }
 
         const variable = new Variable(type, this.context.scopes.length === 1, this.context.getCurrentScope().nextVariableOffset++, 1);
