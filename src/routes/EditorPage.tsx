@@ -62,7 +62,7 @@ export default function EditorPage() {
                         <div className="content-buttons">
                             <a>Saving in progress...</a>
                             <button className="save-button">
-                                <img src="/save.png"/> Save
+                                <img src="/icon-save.png"></img> Save
                             </button>
                         </div>
                     </div>
