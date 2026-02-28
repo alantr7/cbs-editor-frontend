@@ -21,6 +21,7 @@ export function setupIntellisense(monaco: Monaco) {
             { open: "(", close: ")" },
             { open: "[", close: "]" },
             { open: "{", close: "}" },
+            { open: '"', close: '"' },
         ],
         brackets: [['{', '}']]
     });
