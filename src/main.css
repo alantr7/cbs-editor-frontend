@@ -1,3 +1,133 @@
 body {
     margin: 0;
 }
+
+.main-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-container {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.ribbon {
+    color: #d3d3d3;
+    background-color: #1a1c21;
+    border-bottom: 1px solid hsla(0, 0%, 100%, .1);
+    display: flex;
+    flex-direction: row;
+    min-height: 42px;
+    flex: 0 1;
+}
+
+.ribbon-sidebar {
+    padding-left: 56px;
+    display: flex;
+    align-items: center;
+    width: 300px;
+    border-right: 1px solid hsla(0, 0%, 100%, .1);
+    font-family: Space Mono, sans-serif;
+    box-sizing: border-box;
+    font-family: Consolas, sans-serif;
+}
+
+.ribbon-editor {
+    display: flex;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.ribbon-editor .open-file {
+    display: flex;
+    flex-grow: 1;
+    padding-left: 36px;
+    padding-bottom: 2px;
+    font-family: Consolas, Space Mono, sans-serif;
+    align-items: center;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.ribbon-editor .file-details {
+    margin-left: 24px;
+    color: gray;
+}
+
+.ribbon-editor .file-details img {
+    float: left;
+    margin-right: 8px;
+}
+
+.ribbon-editor .content-buttons {
+    display: flex;
+    align-items: center;
+}
+
+.ribbon-editor .content-buttons a {
+    margin-right: 16px;
+    transition: opacity .2s;
+}
+
+.ribbon-editor .content-buttons button {
+    background-color: transparent;
+    border: 0;
+    margin: 0;
+    font-family: Consolas, sans-serif;
+    font-size: 18px;
+    height: 100%;
+    padding: 0 24px;
+    border-left: 1px solid hsla(0, 0%, 100%, .2);
+    cursor: pointer;
+}
+
+.ribbon-editor .content-buttons .save-button {
+    color: #b8d1ff;
+}
+.ribbon-editor .content-buttons .save-button:hover {
+    background-color: hsla(0,0%,100%,.08);
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    min-width: 300px;
+    background-color: #1a1c21;
+    padding-top: 12px;
+}
+
+.files-container {
+    flex-grow: 1;
+}
+.file {
+    padding: 7px 8px 7px 40px;
+    margin: 4px auto;
+    color: #d3d3d3;
+    width: 220px;
+    box-sizing: border-box;
+    font-size: 16px;
+    cursor: pointer;
+    position: relative;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+.file.active {
+    background-color: rgba(67,114,245,.12);
+}
+
+.footer {
+    position: sticky;
+    bottom: 0;
+    padding: 32px;
+    font-size: 14px;
+    color: #c9c9c9;
+    background-color: #1a1c21;
+    cursor: default;
+}

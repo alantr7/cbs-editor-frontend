@@ -1,66 +1,11 @@
-import { Editor } from '@monaco-editor/react'
 import './main.css';
-import { useRef } from 'react';
-import type { CodeEditor, Monaco } from './editor/Monaco';
-import { setupIntellisense } from './editor/intellisense';
-import { setupHighlighting } from './editor/highlighting';
-import { validate } from './editor/validation';
-
-const defaultCode = `
-import bot;
-
-int main() {
-   
-}
-`.trim();
+import EditorPage from "./EditorPage.tsx";
+import { Routes, Route } from 'react-router';
 
 function App() {
-  const monacoRef = useRef<Monaco>(null);
-  const editorRef = useRef<CodeEditor>(null);
-
-  function handleEditorWillMount(monaco: Monaco) {
-    monaco.languages.register({id: "cbs"});
-    setupHighlighting(monaco);
-    setupIntellisense(monaco);
-    monaco.typescript.typescriptDefaults.setEagerModelSync(false);
-    monaco.typescript.typescriptDefaults.setDiagnosticsOptions({
-      noSemanticValidation: true,
-      noSyntaxValidation: true,
-    });
-  }
-
-  function handleEditorDidMount(editor: CodeEditor, monaco: Monaco) {
-    monacoRef.current = monaco;
-    editorRef.current = editor;
-    editor.focus();
-    editor.setPosition({lineNumber: 4, column: 4});
-  }
-
-  function handleEditorChangeContent(value: string | undefined, ev: any) {
-    console.clear();
-    validate(editorRef.current as CodeEditor, monacoRef.current as Monaco);
-  }
-
-  return (
-    <>
-      <Editor
-        height="100vh"
-        width="100vw"
-        defaultLanguage="cbs"
-        options={{
-          minimap: { enabled: false },
-          suggest: {
-            showWords: false,
-          },
-          tabSize: 3,
-        }}
-        defaultValue={defaultCode}
-        beforeMount={handleEditorWillMount}
-        theme='vs-dark'
-        onMount={handleEditorDidMount}
-        onChange={handleEditorChangeContent} />
-    </>
-  )
+  return <Routes>
+    <Route path="/edit/:id" element={<EditorPage />}></Route>
+  </Routes>
 }
 
 export default App
