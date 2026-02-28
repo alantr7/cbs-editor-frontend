@@ -83,6 +83,12 @@ class Parser {
                 // - global variables
                 // - functions
 
+                // skip comments
+                if (nextToken?.startsWith("//")) {
+                    this.tokens.advance();
+                    continue;
+                }
+
                 if (nextToken === "import") {
                     this.parseImport();
                 }

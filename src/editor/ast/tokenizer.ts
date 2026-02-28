@@ -32,6 +32,12 @@ function tokenizeLine(line: string): [string[], number[]] {
     let quotes = false;
     let start = 0;
 
+    if (line.startsWith("//")) {
+        tokens.push(line);
+        columns.push(0);
+        return [tokens, columns];
+    }
+
     for (let i = 1; i < line.length; i++) {
         const character = line.charAt(i);
         if (character == '"') {
