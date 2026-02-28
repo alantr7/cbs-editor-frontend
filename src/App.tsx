@@ -1,5 +1,5 @@
 import './main.css';
-import EditorPage from "./EditorPage.tsx";
+import EditorPage from "./routes/EditorPage.tsx";
 import { Routes, Route } from 'react-router';
 
 function App() {

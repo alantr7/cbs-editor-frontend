@@ -65,7 +65,7 @@ export function setupIntellisense(monaco: Monaco) {
 function registerSnippet(monaco: Monaco, trigger: string, label: string, text: string) {
     monaco.languages.registerCompletionItemProvider("cbs", {
         triggerCharacters: [trigger],
-        provideCompletionItems: function (model, position) {
+        provideCompletionItems: function () {
             const suggestions: any[] = [{
                 label: label,
                 kind: monaco.languages.CompletionItemKind.Keyword,

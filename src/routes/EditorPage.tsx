@@ -1,10 +1,10 @@
-import {useRef} from "react";
-import type {CodeEditor, Monaco} from "./editor/Monaco.ts";
-import {setupHighlighting} from "./editor/highlighting.ts";
-import {setupIntellisense} from "./editor/intellisense.ts";
-import {validate} from "./editor/validation.ts";
+import {useRef, type KeyboardEvent} from "react";
+import type {CodeEditor, Monaco} from "../editor/Monaco.ts";
+import {setupHighlighting} from "../editor/highlighting.ts";
+import {setupIntellisense} from "../editor/intellisense.ts";
+import {validate} from "../editor/validation.ts";
 import {Editor} from "@monaco-editor/react";
-import Sidebar from "./editor/Sidebar.tsx";
+import Sidebar from "../editor/Sidebar.tsx";
 
 const defaultCode = `
 import bot;
@@ -27,27 +27,6 @@ export default function EditorPage() {
             noSemanticValidation: true,
             noSyntaxValidation: true,
         });
-        monaco.editor.defineTheme("catppuccin-mocha", {
-            base: "vs-dark",
-            inherit: true,
-            rules: [
-                { token: "comment", foreground: "9cdba4" },
-                { token: "module-accessor", foreground: "9e9e9e" },
-                { token: "keyword", foreground: "e98282" },
-                { token: "string", foreground: "a6e3a1" },
-                // { token: "number", foreground: "f9e2af" },
-                { token: "identifier", foreground: "cdd6f4" },
-                { token: "function", foreground: "89b4fa" },
-            ],
-            colors: {
-                "editor.background": "#282c34",
-                "editor.foreground": "#cdd6f4",
-                "editorLineNumber.foreground": "#6c7086",
-                "editorCursor.foreground": "#f5e0dc",
-                "editor.selectionBackground": "#45475a",
-                "editor.lineHighlightBackground": "#6699ff0b"
-            },
-        });
     }
 
     function handleEditorDidMount(editor: CodeEditor, monaco: Monaco) {
@@ -57,9 +36,15 @@ export default function EditorPage() {
         editor.setPosition({lineNumber: 4, column: 4});
     }
 
-    function handleEditorChangeContent(value: string | undefined, ev: any) {
+    function handleEditorChangeContent() {
         console.clear();
         validate(editorRef.current as CodeEditor, monacoRef.current as Monaco);
+    }
+
+    function handleSave(ev: KeyboardEvent) {
+        if (ev.ctrlKey && ev.key.toLowerCase() === 's') {
+            ev.preventDefault();
+        }
     }
 
     return (
@@ -82,7 +67,7 @@ export default function EditorPage() {
                         </div>
                     </div>
                 </div>
-                <div className="editor-container">
+                <div className="editor-container" onKeyDown={handleSave}>
                     <Sidebar />
                     <Editor
                         defaultLanguage="cbs"
