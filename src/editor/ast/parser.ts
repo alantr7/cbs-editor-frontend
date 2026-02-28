@@ -107,7 +107,7 @@ class Parser {
                 const error = e as ParserException;
                 errors.push({
                     startColumn: 1 + error.column,
-                    endColumn: 1 + error.column + error.token.length,
+                    endColumn: 1 + error.column + (error.token?.length || 0),
                     startLineNumber: error.line,
                     endLineNumber: error.line,
                     message: e.message,
@@ -125,10 +125,18 @@ class Parser {
     }
 
     parseImport() {
+        const tokenLine = this.tokens.getLine();
+        const tokenColumn = this.tokens.getColumn();
         this.tokens.advance();
+
+        const tokenLine1 = this.tokens.getLine();
+        const tokenColumn2 = this.tokens.getColumn();
         const name = this.tokens.next();
-        
-        this.expect(this.tokens.next(), ";");
+        if (name === null)
+            throw new ParserException(" ", tokenLine, tokenColumn + "import ".length, "Expected module name.");
+
+
+        this.expect(this.tokens.next(), ";", tokenLine1, tokenColumn2 + name.length, "Missing semicolon (;).");
 
         const module = this.moduleRepository.getModule(name);
         if (module == null) {
@@ -145,6 +153,11 @@ class Parser {
 
     parseFunctionOrVariable() {
         const rawType = this.tokens.next();
+
+        if (rawType === null)
+            // todo: throw an error
+            return;
+
         const type = this.parseType(rawType);
 
         // todo: check if it's variable or function anyway and then throw exception with more useful message
@@ -154,6 +167,10 @@ class Parser {
         }
 
         const name = this.tokens.next();
+        if (name === null)
+            // todo: throw an error
+            return;
+
         const differentiator = this.tokens.peek();
 
         if (differentiator === "(") {
@@ -188,6 +205,10 @@ class Parser {
             }
 
             const parameterName = this.tokens.next();
+            if (parameterName === null)
+                // todo: throw ane error
+                return;
+
             const parameterVariable = new Variable(parameterType, false, 0, 1);
             functionScope.variables[parameterName] = parameterVariable;
             functionScope.localVariables[parameterName] = parameterVariable;
@@ -222,7 +243,7 @@ class Parser {
 
         this.context.currentFunction = signature;
 
-        this.expect(this.tokens.next(), "{");
+        this.expect(this.tokens.next(), "{", this.tokens.getPrevLine(), this.tokens.getPrevColumn());
 
         // todo: parse function body
         const body = this.parseBody();
@@ -249,7 +270,7 @@ class Parser {
                 break;
 
             if ((!(statement instanceof If) && !(statement instanceof For)) || (statement instanceof While && (statement as While).isDoWhile))
-                this.expect(this.tokens.next(), ";");
+                this.expect(this.tokens.next(), ";", this.tokens.getPrevLine(), this.tokens.getPrevColumn());
 
             body[statementCount] = statement;
         }
@@ -283,7 +304,8 @@ class Parser {
         // variable declare
         const parameterType = this.parseType(nextToken as string);
         if (parameterType != null) {
-            return this.parseVariableDeclare(parameterType, this.tokens.next());
+            // todo: check if name is null and throw an error if it is
+            return this.parseVariableDeclare(parameterType, this.tokens.next()!);
         }
 
         console.log('next token: ' + this.tokens.peek());
@@ -354,7 +376,6 @@ class Parser {
     }
 
     parseExpression(): StmtExpr | null {
-        let j = 0;
         const stack: string[] = [];
         const postfix: Operand[] = [];
 
@@ -385,7 +406,6 @@ class Parser {
             // TODO: Used !isOperator before, it must support parenthesis!
             if (isNumber(next)) {
                 postfix.push(new Literal(Literal.INT, parseInt(next)));
-                j++;
 
                 expectsOperator = true;
             }
@@ -416,7 +436,6 @@ class Parser {
                             // second argument was a string in old code. if this breaks that's the cause
                             const operator = this.parseOperator(popInParenthesis as string);
                             postfix.push(operator !== null ? operator : new Literal(Literal.INT, parseInt(popInParenthesis as string)));
-                            j++;
                         }
 
                         parenthesisOpen--;
@@ -429,7 +448,6 @@ class Parser {
                             while (getPrecedence(next) <= getPrecedence(stack[stack.length - 1])) {
                                 // todo: operator might be ( or ) but i highly doubt it
                                 postfix.push(this.parseOperator(stack.pop() as string) as Operand);
-                                j++;
                             }
 
                             stack.push(next);
@@ -476,7 +494,6 @@ class Parser {
         while (stack[stack.length - 1] !== "#") {
             const pop = stack.pop();
             postfix.push(this.parseOperator(pop as string) as Operand);
-            j++;
         }
 
         console.log('postfix', postfix);
@@ -526,9 +543,12 @@ class Parser {
         return postfix[0];
     }
 
-    parseVariableAccessOrCall(): Operand {
+    parseVariableAccessOrCall(): Operand | null {
+        if (this.tokens.peek() === null)
+            return null;
+
         if (this.tokens.peek()?.startsWith("\"") && this.tokens.peek()?.endsWith("\""))
-            return new Literal(Literal.STRING, this.tokens.peek()?.substring(1, this.tokens.next().length - 1) as string);
+            return new Literal(Literal.STRING, this.tokens.peek()?.substring(1, this.tokens.next()!.length - 1) as string);
 
         let prefix = 0;
         let postfix = 0;
@@ -542,14 +562,16 @@ class Parser {
             prefix = Unary.PREFIX_DECREMENT;
         }
 
-        const tokenColumn = this.tokens.getColumn();
-        const tokenLine = this.tokens.getLine();
-        const nextToken = this.tokens.next();
+        let tokenColumn = this.tokens.getColumn();
+        let tokenLine = this.tokens.getLine();
+        const nextToken = this.tokens.next()!;
         if ((prefix == 0) && (this.tokens.peek() === "(") || this.tokens.peek() === ".") {
             let moduleName: string | null;
             let functionName: string | null;
             if (this.tokens.peek() === ".") {
                 this.tokens.advance();
+                tokenColumn = this.tokens.getColumn();
+                tokenLine = this.tokens.getLine();
                 moduleName = nextToken;
                 functionName = this.tokens.next();
                 this.expect(this.tokens.peek() as string, "(");
@@ -558,6 +580,9 @@ class Parser {
                 functionName = nextToken;
             }
             this.tokens.advance();
+
+            if (moduleName !== null && this.moduleRepository.getModule(moduleName) === undefined)
+                throw new ParserException(moduleName, tokenLine, tokenColumn, "Module '" + moduleName + "' is not imported or does not exist.");
 
             const fun = this.ast.signatures.find(s => s.name === functionName && moduleName === s.module) || null;
             if (fun === null)
@@ -734,9 +759,9 @@ class Parser {
         }
     }
 
-    expect(token: string, expected: string, line: number = this.tokens.getLine(), column: number = this.tokens.getColumn()) {
+    expect(token: string | null, expected: string, line: number = this.tokens.getLine(), column: number = this.tokens.getColumn(), message = `Unexpected token: '${token}'. Was expecting "${expected}".`) {
         if (token !== expected) {
-            throw new ParserException(token, line, column, "Unexpected token: \"" + token + "\". Was expecting \"" + expected + "\".");
+            throw new ParserException(token, line, column, message);
         }
     }
 
@@ -783,9 +808,9 @@ export function getPrecedence(input: string) {
 export class ParserException extends Error {
     public readonly line: number;
     public readonly column: number;
-    public readonly token: string;
+    public readonly token: string | null;
 
-    constructor(token: string, line: number, column: number, error: string) {
+    constructor(token: string | null, line: number, column: number, error: string) {
         super(error);
         this.token = token;
         this.line = line;

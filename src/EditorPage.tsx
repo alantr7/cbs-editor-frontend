@@ -31,11 +31,13 @@ export default function EditorPage() {
             base: "vs-dark",
             inherit: true,
             rules: [
-                { token: "comment", foreground: "6c7086" },
-                { token: "keyword", foreground: "cba6f7" },
+                { token: "comment", foreground: "9cdba4" },
+                { token: "module-accessor", foreground: "9e9e9e" },
+                { token: "keyword", foreground: "e98282" },
                 { token: "string", foreground: "a6e3a1" },
-                { token: "number", foreground: "f9e2af" },
+                // { token: "number", foreground: "f9e2af" },
                 { token: "identifier", foreground: "cdd6f4" },
+                { token: "function", foreground: "89b4fa" },
             ],
             colors: {
                 "editor.background": "#282c34",

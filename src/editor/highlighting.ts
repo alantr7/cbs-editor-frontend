@@ -8,6 +8,7 @@ export function setupHighlighting(monaco: Monaco) {
 			[/[A-Za-z_]\w*/, "identifier"],
 			[/\d+/, "number"],
 			[/".*?"/, "string"],
+			[/\./, "module-accessor"],
 			[/\/\/.*$/, "comment"],
 		]
 	}

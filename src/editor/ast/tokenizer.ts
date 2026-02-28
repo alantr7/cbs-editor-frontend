@@ -35,8 +35,8 @@ function tokenizeLine(line: string): [string[], number[]] {
     let start = 0;
 
     if (line.startsWith("//")) {
-        tokens.push(line);
-        columns.push(0);
+        // tokens.push(line);
+        // columns.push(0);
         return [tokens, columns];
     }
 
@@ -107,8 +107,10 @@ function tokenizeLine(line: string): [string[], number[]] {
     }
 
     const last = line.substring(start);
-    if (last.trim().length !== 0)
+    if (last.trim().length !== 0) {
         tokens.push(last);
+        columns.push(start + columnsOffset);
+    }
 
     return [ tokens, columns ];
 }
@@ -119,6 +121,8 @@ export class TokenQueue {
     public readonly columns: number[][];
     public row: number = 0;
     public col: number = 0;
+    public prevRow: number = 0;
+    public prevCol: number = 0;
 
     constructor(lines: string[][], lineNumbers: number[], columns: number[][]) {
         this.queue = lines;
@@ -136,9 +140,11 @@ export class TokenQueue {
         return this.queue[this.row][this.col];
     }
 
-    next(): string {
-        const token = this.queue[this.row][this.col];
-        this.advance();
+    next(): string | null {
+        const token = (this.queue[this.row] || [])[this.col] || null;
+        if (token) {
+            this.advance();
+        }
 
         return token;
     }
@@ -153,6 +159,8 @@ export class TokenQueue {
     }
 
     advance(): void {
+        this.prevRow = this.row;
+        this.prevCol = this.col;
         this.col++;
 
         if (this.col >= this.queue[this.row].length) {
@@ -168,8 +176,16 @@ export class TokenQueue {
         return this.lines[this.row];
     }
 
+    getPrevLine(): number {
+        return this.lines[this.prevRow];
+    }
+
     getColumn(): number {
         return (this.columns[this.row] || [0])[this.col] || 0;
+    }
+
+    getPrevColumn(): number {
+        return (this.columns[this.prevRow] || [0])[this.prevCol] || 0;
     }
 
     isEmpty(): boolean {
