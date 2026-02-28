@@ -640,9 +640,11 @@ class Parser {
 
     parseReturn(): Ret {
         this.tokens.advance();
+        const tokenLine = this.tokens.getLine();
+        const tokenColumn = this.tokens.getColumn();
         const value = this.parseExpression();
         if (value?.getResultType() !== this.context.currentFunction?.return_type)
-            throw new ParserException("", 0, 0, "Type mismatch: can not convert '" + value?.getResultType() + "' to '" + this.context.currentFunction?.return_type + "'.");
+            throw new ParserException("", tokenLine, tokenColumn, "Type mismatch: can not convert '" + value?.getResultType().name + "' to '" + this.context.currentFunction?.return_type.name + "'.");
 
         return new Ret(value as Operand);
     }
