@@ -119,6 +119,7 @@ export class TokenQueue {
     public readonly queue: string[][];
     public readonly lines: number[];
     public readonly columns: number[][];
+    public offset: number = 0;
     public row: number = 0;
     public col: number = 0;
     public prevRow: number = 0;
@@ -151,6 +152,7 @@ export class TokenQueue {
 
     rollback(): void {
         this.col--;
+        this.offset--;
 
         if (this.col < 0) {
             this.row--;

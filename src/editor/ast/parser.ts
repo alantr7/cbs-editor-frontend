@@ -38,12 +38,13 @@ class Parser {
     // todo: improve this
     public readonly moduleRepository = new ModuleRepository();
 
+    private context: ParserContext = new ParserContext();
+
     private ast: AST = {
         signatures: [],
         functions: {},
+        scopes_tree: new Scope([0, 0]),
     };
-
-    private context: ParserContext = new ParserContext();
 
     constructor(tokens: TokenQueue) {
         this.tokens = tokens;
@@ -68,7 +69,7 @@ class Parser {
                 },
             }
         });
-        this.context.scopes.push(new Scope());
+        this.context.scopes.push(this.ast.scopes_tree);
     }
 
     parse(): BuildResult {
@@ -186,7 +187,7 @@ class Parser {
 
     parseFunction(type: Type, name: string): void {
         this.expect(this.tokens.next(), "(");
-        const functionScope = this.context.getCurrentScope().createChild(false);
+        const functionScope = this.context.getCurrentScope().createChild([this.tokens.getLine(), this.tokens.getColumn()], false);
         this.context.scopes.push(functionScope);
 
         const parameterTypes: Type[] = new Array(8);
@@ -249,6 +250,7 @@ class Parser {
         const body = this.parseBody();
 
         this.expect(this.tokens.next(), "}");
+        functionScope.endPosition = [this.tokens.getLine(), this.tokens.getColumn()];
 
         const fun = new Function(signature, body);
         this.ast.functions[name] = fun;
@@ -836,6 +838,12 @@ export class ParserContext {
 
 export class Scope {
 
+    owner: null = null;
+
+    beginPosition: [ number, number ];
+
+    endPosition: [ number, number ] = [0, 0];
+
     variables: Record<string, Variable> = {};
 
     parameterVariables: Record<string, Variable> = {};
@@ -844,8 +852,16 @@ export class Scope {
 
     nextVariableOffset = 1;
 
-    createChild(copyLocals: boolean): Scope {
-        const child = new Scope();
+    children: Scope[] = [];
+
+    constructor(beginPosition: [ number, number ]) {
+        this.beginPosition = beginPosition;
+    }
+
+    createChild(beginPosition: [ number, number ], copyLocals: boolean): Scope {
+        const child = new Scope(beginPosition);
+        this.children.push(child);
+
         for (const key in this.variables) {
             child.variables[key] = this.variables[key];
         }
