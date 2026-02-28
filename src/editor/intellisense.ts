@@ -30,6 +30,7 @@ export function setupIntellisense(monaco: Monaco) {
     registerSnippet(monaco, "w", "while", "while ($1) {\n\t$0\n}");
     registerSnippet(monaco, "d", "do", "do {\n\t$0\n} while ($1);");
     registerSnippet(monaco, "f", "for", "for ($1; $2; $3) {\n\t$0\n}");
+    registerSnippet(monaco, "r", "return", "return $1;");
 
     // imported functions
     monaco.languages.registerCompletionItemProvider("cbs", {
