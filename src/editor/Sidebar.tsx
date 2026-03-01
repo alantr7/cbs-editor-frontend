@@ -1,7 +1,16 @@
-export default function Sidebar() {
+import type { BotFile } from "../types/editor-types";
+
+interface SidebarProps {
+    files: BotFile[],
+    openFile: (index: number) => void,
+}
+
+export default function Sidebar({files, openFile}: SidebarProps) {
     return <div className="sidebar">
         <div className="files-container">
-            <div className="file active">file-1</div>
+            {files.map((file, idx) => <div key={file.name} className="file" onClick={() => openFile(idx)}>
+                {file.name}
+            </div>)}
             <hr />
             <a href="https://github.com/alantr7/codebots/wiki/Scripting-Language" target="_blank">
                 <div className="file docs">SCRIPT DOCS</div>
