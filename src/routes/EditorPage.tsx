@@ -6,6 +6,7 @@ import {validate} from "../editor/validation.ts";
 import {Editor} from "@monaco-editor/react";
 import Sidebar from "../editor/Sidebar.tsx";
 import { type BotFile } from "../types/editor-types.ts";
+import { formatDate } from "../utils/formatter.ts";
 
 const defaultCode = `
 import bot;
@@ -19,6 +20,10 @@ export default function EditorPage() {
     const monacoRef = useRef<Monaco>(null);
     const editorRef = useRef<CodeEditor>(null);
 
+    const session = {
+        expires_at: Date.now() + 1000 * 3 * 60 * 60
+    };
+
     const [ files, setFiles ] = useState<BotFile[]>([
         { name: "main.cbs", content: defaultCode, last_modified: Date.now(), },
         { name: "other.cbs", content: defaultCode, last_modified: Date.now(), },
@@ -30,7 +35,7 @@ export default function EditorPage() {
     const [ currentFile, setCurrentFile ] = useState<number>(0);
     const [ fileSize, setFileSize ] = useState<number>(files[currentFile].content.length);
     const [ expiresIn, setExpiresIn ] = useState(0);
-
+    
     function handleEditorWillMount(monaco: Monaco) {
         monaco.languages.register({id: "cbs"});
         setupHighlighting(monaco);
@@ -59,7 +64,7 @@ export default function EditorPage() {
         setFiles(files => {
             const newFiles = [...files];
             newFiles[currentFile].content = editorRef.current!.getValue();
-            
+
             return newFiles;
         });
     };
@@ -77,6 +82,20 @@ export default function EditorPage() {
         editorRef.current?.setValue(files[currentFile].content);
     }, [currentFile]);
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const expiresIn = Math.max(0, session.expires_at - Date.now());
+            setExpiresIn(expiresIn);
+
+            if (expiresIn === 0) {
+                clearInterval(interval);
+                document.location.href = `/error?code=expired`;
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     function handleSave(ev: KeyboardEvent) {
         if (ev.ctrlKey && ev.key.toLowerCase() === 's') {
             ev.preventDefault();
@@ -92,7 +111,7 @@ export default function EditorPage() {
                         <div className="open-file">
                             Editing {files[currentFile].name}
                             <span className="file-details">Size: <span style={{color: "lightgray"}}>{fileSize} / 2048</span></span>
-                            <span className="file-details">Session expires in: <span style={{color: "lightgray"}}>02:48:44</span></span>
+                            <span className="file-details">Session expires in: <span style={{color: "lightgray"}}>{formatDate(new Date(expiresIn), "HH:MM:SS")}</span></span>
                             <span className="file-details"> Author: <img src="https://minotar.net/avatar/hey/24" /> <span style={{color: "lightgray"}}>hey!</span></span>
                         </div>
                         <div className="content-buttons">
