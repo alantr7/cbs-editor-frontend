@@ -150,7 +150,7 @@ export default function EditorPage() {
                             Editing {files[currentFile].name}
                             <span className="file-details">Size: <span style={{color: "lightgray"}}>{fileSize} / 2048</span></span>
                             <span className="file-details">Session expires in: <span style={{color: "lightgray"}}>{formatDate(new Date(expiresIn), "HH:MM:SS")}</span></span>
-                            <span className="file-details"> Author: <img src="https://minotar.net/avatar/hey/24" /> <span style={{color: "lightgray"}}>hey!</span></span>
+                            <span className="file-details"> Author: <img src="https://minotar.net/avatar/alant7/22" /> <span style={{color: "lightgray"}}>Demo</span></span>
                         </div>
                         <div className="content-buttons">
                             {<a style={{opacity: files[currentFile].is_saving ? 1 : 0}}>Saving in progress</a>}
@@ -171,6 +171,7 @@ export default function EditorPage() {
                             },
                             tabSize: 3,
                             fontSize: 18,
+                            scrollBeyondLastLine: false,
                         }}
                         beforeMount={handleEditorWillMount}
                         theme='catppuccin-mocha'

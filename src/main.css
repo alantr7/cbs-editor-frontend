@@ -63,6 +63,7 @@ body {
 .ribbon-editor .file-details img {
     float: left;
     margin-right: 8px;
+    margin-top: 2px;
 }
 
 .ribbon-editor .content-buttons {
