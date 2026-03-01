@@ -14,7 +14,14 @@ const ast: Record<string, Record<string, Record<string, any[]>>> = {
 					"name": "move", "return_type": "int", "parameters": ["string"], "completion": "move(\"$1\")$0",
 				}
 			]
-		}
+		},
+        "math": {
+            "functions": [
+                { "name": "sin", "return_type": "float", "parameters": [ "float" ], "completion": "sin($1)$0" },
+                { "name": "cos", "return_type": "float", "parameters": [ "float" ], "completion": "cos($1)$0" },
+                { "name": "sqrt", "return_type": "float", "parameters": [ "float" ], "completion": "sqrt($1)$0" },
+            ]
+        }
 	}
 };
 

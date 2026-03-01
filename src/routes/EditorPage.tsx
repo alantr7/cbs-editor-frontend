@@ -51,7 +51,7 @@ export default function EditorPage() {
         <>
             <div className="main-container">
                 <div className="ribbon">
-                    <div className="ribbon-sidebar">Program Explorer</div>
+                    <div className="ribbon-sidebar">File Explorer</div>
                     <div className="ribbon-editor">
                         <div className="open-file">
                             Editing file-1

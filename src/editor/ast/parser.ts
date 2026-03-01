@@ -69,6 +69,29 @@ class Parser {
                 },
             }
         });
+        this.moduleRepository.registerModule({
+            name: "math",
+            functions: {
+                sin: {
+                    module: "math",
+                    name: "sin",
+                    parameter_types: [ Type.FLOAT ],
+                    return_type: Type.FLOAT,
+                },
+                cos: {
+                    module: "math",
+                    name: "cos",
+                    parameter_types: [ Type.FLOAT ],
+                    return_type: Type.FLOAT,
+                },
+                sqrt: {
+                    module: "math",
+                    name: "sqrt",
+                    parameter_types: [ Type.FLOAT ],
+                    return_type: Type.FLOAT,
+                }
+            }
+        });
         this.ast.scopes_tree.endPosition = [2048, 2048];
         this.context.scopes.push(this.ast.scopes_tree);
 
@@ -79,6 +102,13 @@ class Parser {
             { module: null, name: "to_int", return_type: Type.INT, parameter_types: [Type.STRING] },
             { module: null, name: "is_float", return_type: Type.INT, parameter_types: [Type.STRING] },
             { module: null, name: "to_float", return_type: Type.FLOAT, parameter_types: [Type.STRING] },
+        ]);
+
+        // register math functions
+        this.ast.signatures.push(...[
+            { module: "math", name: "sin", return_type: Type.FLOAT, parameter_types: [Type.FLOAT] },
+            { module: "math", name: "cos", return_type: Type.FLOAT, parameter_types: [Type.FLOAT] },
+            { module: "math", name: "sqrt", return_type: Type.FLOAT, parameter_types: [Type.FLOAT] },
         ]);
     }
 
