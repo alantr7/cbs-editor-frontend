@@ -69,6 +69,7 @@ class Parser {
                 },
             }
         });
+        this.ast.scopes_tree.endPosition = [2048, 2048];
         this.context.scopes.push(this.ast.scopes_tree);
     }
 
@@ -250,7 +251,7 @@ class Parser {
         const body = this.parseBody();
 
         this.expect(this.tokens.next(), "}");
-        functionScope.endPosition = [this.tokens.getLine(), this.tokens.getColumn()];
+        functionScope.endPosition = [this.tokens.getPrevLine(), this.tokens.getPrevColumn()];
 
         const fun = new Function(signature, body);
         this.ast.functions[name] = fun;

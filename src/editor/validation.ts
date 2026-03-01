@@ -1,4 +1,5 @@
 import { buildAST } from "./ast/ast";
+import { setLatestAST } from "./intellisense";
 import type { CodeEditor, Monaco } from "./Monaco";
 import { editor as ed } from 'monaco-editor';
 
@@ -14,5 +15,6 @@ export function validate(editor: CodeEditor, monaco: Monaco) {
         markers.push(error);
     });
 
+    setLatestAST(ast);
     monaco.editor.setModelMarkers(model, "owner", markers);
 }

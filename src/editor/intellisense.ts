@@ -1,4 +1,7 @@
+import type { AST } from "./ast/ast";
+import type { Scope } from "./ast/parser";
 import type { Monaco } from "./Monaco";
+import { Position } from 'monaco-editor';
 
 const ast: Record<string, Record<string, Record<string, any[]>>> = {
 	"modules": {
@@ -14,6 +17,11 @@ const ast: Record<string, Record<string, Record<string, any[]>>> = {
 		}
 	}
 };
+
+let latestAst: AST;
+export function setLatestAST(ast: AST) {
+    latestAst = ast;
+}
 
 export function setupIntellisense(monaco: Monaco) {
     monaco.languages.setLanguageConfiguration("cbs", {
@@ -64,16 +72,51 @@ export function setupIntellisense(monaco: Monaco) {
     // pressing ctrl + space. modules + variable names + functions
     monaco.languages.registerCompletionItemProvider("cbs", {
         triggerCharacters: [],
-        provideCompletionItems: function () {
-            const suggestions: any[] = Object.keys(ast.modules).map(m => ({
+        provideCompletionItems: function (model, position) {
+            const suggestions: any[] = [];
+
+            // modules
+            suggestions.push(...Object.keys(ast.modules).map(m => ({
                 label: m,
                 kind: monaco.languages.CompletionItemKind.Module,
                 insertText: m + ".",
                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-            }));
+            })));
+
+            // local variables
+            const scope = getScopeRecursively(latestAst.scopes_tree, position);
+            console.log('latest scope: ', latestAst.scopes_tree, scope);
+            
+            suggestions.push(...Object.keys(scope.variables).map(v => ({
+                label: v,
+                kind: monaco.languages.CompletionItemKind.Variable,
+                insertText: v,
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+            })));
+
+            // functions
+            suggestions.push(...latestAst.signatures.filter(f => f.module === null).map(f => ({
+                label: f.name,
+                kind: monaco.languages.CompletionItemKind.Function,
+                insertText: f.name + "($1)$0",
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+            })));
+
             return { suggestions };
         }
     });
+}
+
+function getScopeRecursively(scope: Scope, position: Position) {
+    for (const child of scope.children) {
+        if (position.lineNumber > child.beginPosition[0] && position.lineNumber < child.endPosition[0])
+            return getScopeRecursively(child, position);
+
+        if (position.lineNumber === child.beginPosition[0] || position.lineNumber === child.endPosition[0])
+            if (position.column >= child.beginPosition[1] && position.column <= child.endPosition[1])
+                return getScopeRecursively(child, position);
+    }
+    return scope;
 }
 
 function registerSnippet(monaco: Monaco, trigger: string, label: string, text: string) {
