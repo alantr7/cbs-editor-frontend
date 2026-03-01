@@ -80,6 +80,8 @@ export function setupIntellisense(monaco: Monaco) {
                 label: m,
                 kind: monaco.languages.CompletionItemKind.Module,
                 insertText: m + ".",
+                sortText: "1_" + m,
+                detail: "module",
                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
             })));
 
@@ -91,6 +93,8 @@ export function setupIntellisense(monaco: Monaco) {
                 label: v,
                 kind: monaco.languages.CompletionItemKind.Variable,
                 insertText: v,
+                sortText: "0_" + v,
+                detail: scope.variables[v].type.name,
                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
             })));
 
@@ -99,6 +103,8 @@ export function setupIntellisense(monaco: Monaco) {
                 label: f.name,
                 kind: monaco.languages.CompletionItemKind.Function,
                 insertText: f.name + "($1)$0",
+                sortText: "2_" + f.name,
+                detail: f.return_type.name,
                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
             })));
 
