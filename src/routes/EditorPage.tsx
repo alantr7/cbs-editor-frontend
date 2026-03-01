@@ -7,6 +7,7 @@ import {Editor} from "@monaco-editor/react";
 import Sidebar from "../editor/Sidebar.tsx";
 import { type BotFile } from "../types/editor-types.ts";
 import { formatDate } from "../utils/formatter.ts";
+import axios from "axios";
 
 const defaultCode = `
 import bot;
@@ -21,6 +22,7 @@ export default function EditorPage() {
     const editorRef = useRef<CodeEditor>(null);
 
     const session = {
+        id: "demo",
         expires_at: Date.now() + 1000 * 3 * 60 * 60
     };
 
@@ -78,6 +80,17 @@ export default function EditorPage() {
         setCurrentFile(idx);
     }
 
+    const updateFile = (mapper: (file: BotFile) => void) => {
+        setFiles(files => files.map((file, index) => {
+            if (index !== currentFile)
+                return file;
+
+            const copy = { ...file };
+            mapper(copy);
+            return copy;
+        }));
+    }
+
     useEffect(() => {
         editorRef.current?.setValue(files[currentFile].content);
     }, [currentFile]);
@@ -99,7 +112,32 @@ export default function EditorPage() {
     function handleSave(ev: KeyboardEvent) {
         if (ev.ctrlKey && ev.key.toLowerCase() === 's') {
             ev.preventDefault();
+            ev.stopPropagation();
+
+            handleSaveFile();
         }
+    }
+
+    function handleSaveFile() {
+        if (files[currentFile].is_saving || files[currentFile].saved_content === editorRef.current?.getValue())
+            return;
+
+        updateLocalFile();
+        updateFile(f => f.is_saving = true);
+
+        if (session.id === "demo") {
+            updateFile(f => (f.saved_content = editorRef.current!.getValue(), f.is_saving = false));
+            return;
+        }
+
+        axios.put(`/api/sessions/${session.id}`, {
+            files: [{
+                id: files[currentFile].id,
+                content: editorRef.current!.getValue()
+            }]
+        }).then(() => {
+            updateFile(f => f.saved_content = editorRef.current!.getValue());
+        }).finally(() => updateFile(f => f.is_saving = false));
     }
 
     return (
@@ -115,10 +153,10 @@ export default function EditorPage() {
                             <span className="file-details"> Author: <img src="https://minotar.net/avatar/hey/24" /> <span style={{color: "lightgray"}}>hey!</span></span>
                         </div>
                         <div className="content-buttons">
-                            <a>Saving in progress...</a>
-                            <button className="save-button">
-                                <img src="/icon-save.png"></img> Save
-                            </button>
+                            {<a style={{opacity: files[currentFile].is_saving ? 1 : 0}}>Saving in progress</a>}
+                            <button className="save-button" onClick={handleSaveFile}
+                                disabled={files[currentFile].is_saving || files[currentFile].saved_content === editorRef!.current?.getValue()}>
+                                <img src="/icon-save.png" /> Save</button>
                         </div>
                     </div>
                 </div>

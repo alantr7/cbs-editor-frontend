@@ -96,12 +96,19 @@ body {
     height: 14px;
     margin-bottom: 3px;
 }
-
 .ribbon-editor .content-buttons .save-button {
     color: #b8d1ff;
 }
 .ribbon-editor .content-buttons .save-button:hover {
     background-color: hsla(0,0%,100%,.08);
+}
+.ribbon-editor .content-buttons .save-button:disabled {
+    color: gray;
+    cursor: not-allowed;
+    font-weight: 400;
+}
+.ribbon-editor .content-buttons .save-button:disabled img {
+    filter: grayscale(1);
 }
 
 .sidebar {
