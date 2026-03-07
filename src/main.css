@@ -173,7 +173,7 @@ body {
     width: 18px;
     height: 18px;
     content: " ";
-    background-image: url(../public/icon-file.png);
+    background-image: url(/icon-file.png);
     background-size: 100%;
     background-position: 50%;
     background-repeat: no-repeat;
@@ -196,7 +196,7 @@ a {
 }
 .file.docs::before {
     top: 11px;
-    background-image: url(../public/icon-docs.png);
+    background-image: url(/icon-docs.png);
 }
 
 .files-container hr {
