@@ -375,6 +375,7 @@ class Parser {
         let initialValue: Operand | null;
         const tokenLine = this.tokens.getPrevLine();
         const tokenColumn = this.tokens.getPrevColumn();
+
         // no assignment
         if (this.tokens.peek() === ";") {
             // todo: arrays
@@ -395,6 +396,17 @@ class Parser {
             }
         }
         else return null;
+
+        if (type === Type.VOID) {
+            this.errors.push({
+                startColumn: tokenColumn + 1,
+                endColumn: tokenColumn + name.length + 1,
+                startLineNumber: tokenLine,
+                endLineNumber: tokenLine,
+                message: `Variable can not be of type void.`,
+                severity: monaco.MarkerSeverity.Error,
+            });
+        }
 
         if (this.context.getCurrentScope().localVariables[name]) {
             this.tokens.rollback();
