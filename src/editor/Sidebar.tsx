@@ -2,13 +2,14 @@ import type { BotFile } from "../types/editor-types";
 
 interface SidebarProps {
     files: BotFile[],
+    currentFile: number,
     openFile: (index: number) => void,
 }
 
-export default function Sidebar({files, openFile}: SidebarProps) {
+export default function Sidebar({files, currentFile, openFile}: SidebarProps) {
     return <div className="sidebar">
         <div className="files-container">
-            {files.map((file, idx) => <div key={file.name} className="file" onClick={() => openFile(idx)}>
+            {files.map((file, idx) => <div key={file.name} className={`file ${idx === currentFile && "active"}`} onClick={() => openFile(idx)}>
                 {file.name}
             </div>)}
             <hr />

@@ -161,7 +161,7 @@ export default function EditorPage() {
                     </div>
                 </div>
                 <div className="editor-container" onKeyDown={handleSave}>
-                    <Sidebar files={files} openFile={handleOpenFile} />
+                    <Sidebar files={files} currentFile={currentFile} openFile={handleOpenFile} />
                     <Editor
                         defaultLanguage="cbs"
                         options={{
