@@ -43,6 +43,7 @@ class Parser {
     private errors: ParseError[] = [];
 
     private ast: AST = {
+        imports: [],
         signatures: [],
         functions: {},
         scopes_tree: new Scope([0, 0]),
@@ -129,7 +130,6 @@ class Parser {
         if (name === null)
             throw new ParserException(" ", tokenLine, tokenColumn + "import ".length, "Expected module name.");
 
-
         this.expect(this.tokens.next(), ";", tokenLine1, tokenColumn2 + name.length, "Missing semicolon (;).");
 
         const module = this.moduleRepository[name];
@@ -138,6 +138,8 @@ class Parser {
             this.tokens.rollback();
             throw new ParserException(name, this.tokens.getLine(), this.tokens.getColumn(), "Unknown module '" + name + "'.");
         }
+
+        this.ast.imports.push(name);
 
         for (const fun of Object.values(module.functions)) {
             this.ast.signatures.push(fun);
@@ -579,9 +581,9 @@ class Parser {
             let moduleName: string | null;
             let functionName: string | null;
             if (this.tokens.peek() === ".") {
+                tokenColumn = this.tokens.getPrevColumn();
+                tokenLine = this.tokens.getPrevLine();
                 this.tokens.advance();
-                tokenColumn = this.tokens.getColumn();
-                tokenLine = this.tokens.getLine();
                 moduleName = nextToken;
                 functionName = this.tokens.next();
                 this.expect(this.tokens.peek() as string, "(");
@@ -591,7 +593,7 @@ class Parser {
             }
             this.tokens.advance();
 
-            if (moduleName !== null && this.moduleRepository[moduleName] === undefined)
+            if (moduleName !== null && (this.moduleRepository[moduleName] === undefined || !this.ast.imports.includes(moduleName)))
                 throw new ParserException(moduleName, tokenLine, tokenColumn, "Module '" + moduleName + "' is not imported or does not exist.");
 
             const fun = this.ast.signatures.find(s => s.name === functionName && moduleName === s.module) || null;

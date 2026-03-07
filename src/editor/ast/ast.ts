@@ -25,6 +25,7 @@ export interface ParseError {
 }
 
 export interface AST {
+    imports: string[],
     signatures: FunctionSignature[],
     functions: Record<string, Function>,
     scopes_tree: Scope,
