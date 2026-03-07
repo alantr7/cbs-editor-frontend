@@ -43,7 +43,7 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
 
             const moduleName = match[1];
             const functions = session.modules[moduleName].functions;
-            if (!functions) return { suggestions: [] };
+            if (!functions || moduleName === "lang") return { suggestions: [] };
 
             const suggestions: any[] = functions.map(fn => ({
                 label: fn.name,
@@ -78,7 +78,7 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
 
             if (scope && scope.beginPosition[0] !== 0) {
                 // modules
-                suggestions.push(...Object.keys(session.modules).map(m => ({
+                suggestions.push(...Object.keys(session.modules).filter(m => m !== "lang").map(m => ({
                     label: m,
                     kind: monaco.languages.CompletionItemKind.Module,
                     insertText: m + ".",

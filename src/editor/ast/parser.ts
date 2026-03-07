@@ -124,7 +124,7 @@ class Parser {
         this.expect(this.tokens.next(), ";", tokenLine1, tokenColumn2 + name.length, "Missing semicolon (;).");
 
         const module = this.moduleRepository[name];
-        if (module === null || module === undefined) {
+        if (module === null || module === undefined || name === "lang") {
             this.tokens.rollback();
             this.tokens.rollback();
             throw new ParserException(name, this.tokens.getLine(), this.tokens.getColumn(), "Unknown module '" + name + "'.");
