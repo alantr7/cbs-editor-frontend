@@ -471,4 +471,15 @@ export class Type {
     static FLOAT    = new Type("float");
     static STRING   = new Type("string");
     static VOID     = new Type("void");
+
+    static parseType(input: string): Type | null {
+        switch (input) {
+            case "int":     return Type.INT;
+            case "float":   return Type.FLOAT;
+            case "string":  return Type.STRING;
+            case "void":    return Type.VOID;
+            default:        return null;
+        }
+    }
+
 }

@@ -58,7 +58,7 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
     // pressing ctrl + space. modules + variable names + functions
     monaco.languages.registerCompletionItemProvider("cbs", {
         triggerCharacters: [],
-        provideCompletionItems: function (model, position) {
+        provideCompletionItems: function (_, position) {
             const suggestions: any[] = [];
 
             const scope = getScopeRecursively(latestAst.scopes_tree, position);

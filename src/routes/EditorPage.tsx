@@ -46,6 +46,7 @@ export default function EditorPage() {
         }
     };
 
+    const [ isLoading, setIsLoading ] = useState(true);
     const [ files, setFiles ] = useState<BotFile[]>([
         { name: "main.cbs", content: defaultCode, last_modified: Date.now(), },
         { name: "other.cbs", content: defaultCode, last_modified: Date.now(), },
@@ -133,6 +134,12 @@ export default function EditorPage() {
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        setTimeout(() => {
+            setIsLoading(false);
+        }, 3000);
+    }, []);
+
     function handleSave(ev: KeyboardEvent) {
         if (ev.ctrlKey && ev.key.toLowerCase() === 's') {
             ev.preventDefault();
@@ -166,7 +173,11 @@ export default function EditorPage() {
 
     return (
         <>
-            <div className="main-container">
+            <div className={`loading-overlay ${isLoading && "visible"}`}>
+                Loading session<br />
+                <small style={{fontSize: "14px"}}>Please wait - this won't take long</small>
+            </div>
+            {!isLoading && <div className="main-container">
                 <div className="ribbon">
                     <div className="ribbon-sidebar">File Explorer</div>
                     <div className="ribbon-editor">
@@ -196,6 +207,7 @@ export default function EditorPage() {
                             fontSize: 18,
                             scrollBeyondLastLine: false,
                         }}
+                        loading=""
                         beforeMount={handleEditorWillMount}
                         theme='catppuccin-mocha'
                         onMount={handleEditorDidMount}
@@ -205,7 +217,7 @@ export default function EditorPage() {
                     <span>Position: <span style={{color: "lightgray"}}>{caretPos[0]}, {caretPos[1]}</span></span>
                     <span>Size: <span style={{color: "lightgray"}}>{fileSize} / 2048</span></span>
                 </div>
-            </div>
+            </div>}
         </>
     )
 }

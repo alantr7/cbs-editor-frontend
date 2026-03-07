@@ -5,6 +5,29 @@ body {
     background-color: #26282c;
 }
 
+.loading-overlay {
+    color: #b8b8b8;
+    background-color: #1a1c21;
+    font-family: "Space Mono", sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    text-align: center;
+    padding-top: 128px;
+    transition: opacity .3s;
+    opacity: 0;
+    z-index: 100;
+    pointer-events: none;
+}
+.loading-overlay.visible {
+    cursor: default;
+    user-select: none;
+    pointer-events: all;
+    opacity: 1;
+}
+
 .main-container {
     height: 100vh;
     display: flex;
@@ -17,6 +40,10 @@ body {
     flex-grow: 1;
     max-height: 100%;
     overflow: hidden;
+}
+
+.monaco-editor {
+    padding-top: 4px;
 }
 
 .ribbon {
