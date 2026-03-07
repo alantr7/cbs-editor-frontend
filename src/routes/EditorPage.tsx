@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState, type KeyboardEvent} from "react";
+import {useEffect, useRef, useState, type KeyboardEvent} from "react";
 import type {CodeEditor, Monaco} from "../editor/Monaco.ts";
 import {setupHighlighting} from "../editor/highlighting.ts";
 import {setupIntellisense} from "../editor/intellisense.ts";
@@ -8,6 +8,8 @@ import Sidebar from "../editor/Sidebar.tsx";
 import { type BotFile } from "../types/editor-types.ts";
 import { formatDate } from "../utils/formatter.ts";
 import axios from "axios";
+import type { EditorSession } from "../types/session.ts";
+import { Type } from "../editor/ast/ast.ts";
 
 const defaultCode = `
 import bot;
@@ -21,9 +23,27 @@ export default function EditorPage() {
     const monacoRef = useRef<Monaco>(null);
     const editorRef = useRef<CodeEditor>(null);
 
-    const session = {
+    const session: EditorSession = {
         id: "demo",
-        expires_at: Date.now() + 1000 * 3 * 60 * 60
+        expires_at: Date.now() + 1000 * 3 * 60 * 60,
+        modules: {
+            bot: {
+                name: "bot",
+                functions: [
+                    { module: "bot", name: "move", return_type: Type.INT, parameter_types: [ Type.STRING ], completion: "move($1)$0" },
+                    { module: "bot", name: "print", return_type: Type.INT, parameter_types: [ Type.STRING ], completion: "print($1)$0" },
+                ]
+            },
+            math: {
+                name: "math",
+                functions: [
+                    { module: "math", name: "cos", return_type: Type.FLOAT, parameter_types: [ Type.FLOAT ], completion: "cos($1)$0" },
+                    { module: "math", name: "sin", return_type: Type.FLOAT, parameter_types: [ Type.FLOAT ], completion: "sin($1)$0" },
+                    { module: "math", name: "sqrt", return_type: Type.FLOAT, parameter_types: [ Type.FLOAT ], completion: "sqrt($1)$0" },
+                    { module: "math", name: "test", return_type: Type.FLOAT, parameter_types: [ Type.FLOAT ], completion: "test($1)$0" },
+                ]
+            }
+        }
     };
 
     const [ files, setFiles ] = useState<BotFile[]>([
@@ -34,7 +54,6 @@ export default function EditorPage() {
         is_saving: false,
         saved_content: f.content,
     })));
-
     const [ caretPos, setCaretPos ] = useState<[number, number]>([4, 4]);
     const [ currentFile, setCurrentFile ] = useState<number>(0);
     const [ fileSize, setFileSize ] = useState<number>(files[currentFile].content.length);
@@ -43,7 +62,7 @@ export default function EditorPage() {
     function handleEditorWillMount(monaco: Monaco) {
         monaco.languages.register({id: "cbs"});
         setupHighlighting(monaco);
-        setupIntellisense(monaco);
+        setupIntellisense(monaco, session);
         monaco.typescript.typescriptDefaults.setEagerModelSync(false);
         monaco.typescript.typescriptDefaults.setDiagnosticsOptions({
             noSemanticValidation: true,
@@ -63,7 +82,7 @@ export default function EditorPage() {
     }
 
     function handleEditorChangeContent() {
-        validate(editorRef.current as CodeEditor, monacoRef.current as Monaco);
+        validate(editorRef.current as CodeEditor, monacoRef.current as Monaco, session);
         setFileSize(editorRef.current?.getValue().length || 0);
     }
 

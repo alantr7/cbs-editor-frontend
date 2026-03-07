@@ -1,14 +1,15 @@
+import type { EditorSession } from "../types/session";
 import { buildAST } from "./ast/ast";
 import { setLatestAST } from "./intellisense";
 import type { CodeEditor, Monaco } from "./Monaco";
 import { editor as ed } from 'monaco-editor';
 
-export function validate(editor: CodeEditor, monaco: Monaco) {
+export function validate(editor: CodeEditor, monaco: Monaco, session: EditorSession) {
     const model = editor.getModel() as ed.ITextModel;
     const lines = model.getLinesContent();
     const markers: any[] = [];
 
-    const { ast, errors } = buildAST(lines);
+    const { ast, errors } = buildAST(lines, session);
     console.log(ast);
 
     errors.forEach(error => {

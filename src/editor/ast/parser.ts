@@ -1,5 +1,5 @@
+import type { EditorSession, ModuleRepository } from "../../types/session";
 import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, For, Function, If, Literal, Logical, Operand, Operator, Ret, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
-import { ModuleRepository } from "./module-repository";
 import type { TokenQueue } from "./tokenizer";
 import * as monaco from 'monaco-editor';
 
@@ -27,8 +27,8 @@ export function isOperator(input: string): boolean {
 const UNARY = ["++", "--"];
 const CAST = ["(int)", "(float)"];
 
-export function parse(tokens: TokenQueue) {
-    return new Parser(tokens).parse();
+export function parse(tokens: TokenQueue, session: EditorSession) {
+    return new Parser(tokens, session.modules).parse();
 }
 
 class Parser {
@@ -36,7 +36,7 @@ class Parser {
     public readonly tokens: TokenQueue;
 
     // todo: improve this
-    public readonly moduleRepository = new ModuleRepository();
+    public readonly moduleRepository: ModuleRepository;
 
     private context: ParserContext = new ParserContext();
 
@@ -48,70 +48,22 @@ class Parser {
         scopes_tree: new Scope([0, 0]),
     };
 
-    constructor(tokens: TokenQueue) {
+    constructor(tokens: TokenQueue, modules: ModuleRepository) {
         this.tokens = tokens;
-        this.moduleRepository.registerModule({
-            name: "bot",
-            functions: {
-                move: {
-                    module: "bot",
-                    name: "move",
-                    parameter_types: [
-                        Type.INT,
-                    ],
-                    return_type: Type.INT
-                },
-                print: {
-                    module: "bot",
-                    name: "print",
-                    parameter_types: [
-                        Type.STRING,
-                    ],
-                    return_type: Type.STRING,
-                },
-            }
-        });
-        this.moduleRepository.registerModule({
-            name: "math",
-            functions: {
-                sin: {
-                    module: "math",
-                    name: "sin",
-                    parameter_types: [ Type.FLOAT ],
-                    return_type: Type.FLOAT,
-                },
-                cos: {
-                    module: "math",
-                    name: "cos",
-                    parameter_types: [ Type.FLOAT ],
-                    return_type: Type.FLOAT,
-                },
-                sqrt: {
-                    module: "math",
-                    name: "sqrt",
-                    parameter_types: [ Type.FLOAT ],
-                    return_type: Type.FLOAT,
-                }
-            }
-        });
+        this.moduleRepository = modules;
         this.ast.scopes_tree.endPosition = [2048, 2048];
         this.context.scopes.push(this.ast.scopes_tree);
 
         // register lang functions
         this.ast.signatures.push(...[
-            { module: null, name: "strlen", return_type: Type.INT, parameter_types: [Type.STRING] },
-            { module: null, name: "is_int", return_type: Type.INT, parameter_types: [Type.STRING] },
-            { module: null, name: "to_int", return_type: Type.INT, parameter_types: [Type.STRING] },
-            { module: null, name: "is_float", return_type: Type.INT, parameter_types: [Type.STRING] },
-            { module: null, name: "to_float", return_type: Type.FLOAT, parameter_types: [Type.STRING] },
+            { module: null, name: "strlen", return_type: Type.INT, parameter_types: [Type.STRING], completion: "strlen($1)$0" },
+            { module: null, name: "is_int", return_type: Type.INT, parameter_types: [Type.STRING], completion: "is_int($1)$0" },
+            { module: null, name: "to_int", return_type: Type.INT, parameter_types: [Type.STRING], completion: "to_int($1)$0" },
+            { module: null, name: "is_float", return_type: Type.INT, parameter_types: [Type.STRING], completion: "is_float($1)$0" },
+            { module: null, name: "to_float", return_type: Type.FLOAT, parameter_types: [Type.STRING], completion: "to_float($1)$0" },
         ]);
 
-        // register math functions
-        this.ast.signatures.push(...[
-            { module: "math", name: "sin", return_type: Type.FLOAT, parameter_types: [Type.FLOAT] },
-            { module: "math", name: "cos", return_type: Type.FLOAT, parameter_types: [Type.FLOAT] },
-            { module: "math", name: "sqrt", return_type: Type.FLOAT, parameter_types: [Type.FLOAT] },
-        ]);
+        Object.values(modules).forEach(module => this.ast.signatures.push(...module.functions));
     }
 
     parse(): BuildResult {
@@ -180,8 +132,8 @@ class Parser {
 
         this.expect(this.tokens.next(), ";", tokenLine1, tokenColumn2 + name.length, "Missing semicolon (;).");
 
-        const module = this.moduleRepository.getModule(name);
-        if (module == null) {
+        const module = this.moduleRepository[name];
+        if (module === null || module === undefined) {
             this.tokens.rollback();
             this.tokens.rollback();
             throw new ParserException(name, this.tokens.getLine(), this.tokens.getColumn(), "Unknown module '" + name + "'.");
@@ -279,6 +231,7 @@ class Parser {
             module: null,
             name,
             return_type: type,
+            completion: name + "($1)$0",
             parameter_types: parameterTypes.slice(0, parameterCount)
         };
         this.ast.signatures.push(signature);
@@ -638,7 +591,7 @@ class Parser {
             }
             this.tokens.advance();
 
-            if (moduleName !== null && this.moduleRepository.getModule(moduleName) === undefined)
+            if (moduleName !== null && this.moduleRepository[moduleName] === undefined)
                 throw new ParserException(moduleName, tokenLine, tokenColumn, "Module '" + moduleName + "' is not imported or does not exist.");
 
             const fun = this.ast.signatures.find(s => s.name === functionName && moduleName === s.module) || null;

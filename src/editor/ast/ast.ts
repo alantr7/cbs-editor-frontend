@@ -1,10 +1,11 @@
 import * as monaco from 'monaco-editor';
 import { tokenize } from './tokenizer';
 import { parse, Scope } from './parser';
+import type { EditorSession } from '../../types/session';
 
-export function buildAST(lines: string[]): BuildResult {
+export function buildAST(lines: string[], session: EditorSession): BuildResult {
     const tokens = tokenize(lines);
-    const ast = parse(tokens);
+    const ast = parse(tokens, session);
 
     return ast;
 }
@@ -32,6 +33,7 @@ export interface AST {
 export interface FunctionSignature {
     module: string | null,
     name: string,
+    completion: string,
     return_type: Type,
     parameter_types: Type[],
 }

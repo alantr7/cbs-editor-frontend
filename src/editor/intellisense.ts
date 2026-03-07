@@ -1,36 +1,15 @@
+import type { EditorSession } from "../types/session";
 import type { AST } from "./ast/ast";
 import type { Scope } from "./ast/parser";
 import type { Monaco } from "./Monaco";
 import { Position } from 'monaco-editor';
-
-const ast: Record<string, Record<string, Record<string, any[]>>> = {
-	"modules": {
-		"bot": {
-			"functions": [
-				{
-					"name": "print", "return_type": "int", "parameters": ["string"], "completion": "print(\"$1\")$0",
-				},
-				{
-					"name": "move", "return_type": "int", "parameters": ["string"], "completion": "move(\"$1\")$0",
-				}
-			]
-		},
-        "math": {
-            "functions": [
-                { "name": "sin", "return_type": "float", "parameters": [ "float" ], "completion": "sin($1)$0" },
-                { "name": "cos", "return_type": "float", "parameters": [ "float" ], "completion": "cos($1)$0" },
-                { "name": "sqrt", "return_type": "float", "parameters": [ "float" ], "completion": "sqrt($1)$0" },
-            ]
-        }
-	}
-};
 
 let latestAst: AST;
 export function setLatestAST(ast: AST) {
     latestAst = ast;
 }
 
-export function setupIntellisense(monaco: Monaco) {
+export function setupIntellisense(monaco: Monaco, session: EditorSession) {
     monaco.languages.setLanguageConfiguration("cbs", {
         autoClosingPairs: [
             { open: "(", close: ")" },
@@ -63,7 +42,7 @@ export function setupIntellisense(monaco: Monaco) {
             if (!match) return { suggestions: [] };
 
             const moduleName = match[1];
-            const functions = ast.modules[moduleName].functions;
+            const functions = session.modules[moduleName].functions;
             if (!functions) return { suggestions: [] };
 
             const suggestions: any[] = functions.map(fn => ({
@@ -79,11 +58,11 @@ export function setupIntellisense(monaco: Monaco) {
     // pressing ctrl + space. modules + variable names + functions
     monaco.languages.registerCompletionItemProvider("cbs", {
         triggerCharacters: [],
-        provideCompletionItems: function (model, position) {
+        provideCompletionItems: function (_, position) {
             const suggestions: any[] = [];
 
             // modules
-            suggestions.push(...Object.keys(ast.modules).map(m => ({
+            suggestions.push(...Object.keys(session.modules).map(m => ({
                 label: m,
                 kind: monaco.languages.CompletionItemKind.Module,
                 insertText: m + ".",
