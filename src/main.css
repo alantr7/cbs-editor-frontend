@@ -202,3 +202,17 @@ a {
     color: #b8b8b8;
     font-family: Space Mono, sans-serif;
 }
+
+.status-bar {
+    background-color: #1a1c21;
+    border-top:1px solid hsla(0, 0%, 100%, .1);
+    color: #b8b8b8;
+    font-family: "Space Mono", sans-serif;
+    font-size: 12px;
+    padding: 2px 16px;
+    text-align: right;
+}
+
+.status-bar > span {
+    margin-left: 24px;
+}

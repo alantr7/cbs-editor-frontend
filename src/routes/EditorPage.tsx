@@ -34,6 +34,8 @@ export default function EditorPage() {
         is_saving: false,
         saved_content: f.content,
     })));
+
+    const [ caretPos, setCaretPos ] = useState<[number, number]>([4, 4]);
     const [ currentFile, setCurrentFile ] = useState<number>(0);
     const [ fileSize, setFileSize ] = useState<number>(files[currentFile].content.length);
     const [ expiresIn, setExpiresIn ] = useState(0);
@@ -55,6 +57,9 @@ export default function EditorPage() {
         editor.focus();
         editor.setValue(files[currentFile].content);
         editor.setPosition({lineNumber: 4, column: 4});
+        editor.onDidChangeCursorPosition(e => {
+            setCaretPos([e.position.lineNumber, e.position.column]);
+        });
     }
 
     function handleEditorChangeContent() {
@@ -148,7 +153,6 @@ export default function EditorPage() {
                     <div className="ribbon-editor">
                         <div className="open-file">
                             Editing {files[currentFile].name}
-                            <span className="file-details">Size: <span style={{color: "lightgray"}}>{fileSize} / 2048</span></span>
                             <span className="file-details">Session expires in: <span style={{color: "lightgray"}}>{formatDate(new Date(expiresIn), "HH:MM:SS")}</span></span>
                             <span className="file-details"> Author: <img src="https://minotar.net/avatar/alant7/22" /> <span style={{color: "lightgray"}}>Demo</span></span>
                         </div>
@@ -177,6 +181,10 @@ export default function EditorPage() {
                         theme='catppuccin-mocha'
                         onMount={handleEditorDidMount}
                         onChange={handleEditorChangeContent} />
+                </div>
+                <div className="status-bar">
+                    <span>Position: <span style={{color: "lightgray"}}>{caretPos[0]}, {caretPos[1]}</span></span>
+                    <span>Size: <span style={{color: "lightgray"}}>{fileSize} / 2048</span></span>
                 </div>
             </div>
         </>
