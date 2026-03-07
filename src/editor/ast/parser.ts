@@ -571,6 +571,10 @@ class Parser {
         if ((prefix == 0) && (this.tokens.peek() === "(") || this.tokens.peek() === ".") {
             let moduleName: string | null;
             let functionName: string | null;
+
+            const tokenColumnName = this.tokens.getColumn();
+            const tokenLineName = this.tokens.getLine();
+            
             if (this.tokens.peek() === ".") {
                 tokenColumn = this.tokens.getPrevColumn();
                 tokenLine = this.tokens.getPrevLine();
@@ -589,7 +593,7 @@ class Parser {
 
             const fun = this.ast.signatures.find(s => s.name === functionName && moduleName === s.module) || null;
             if (fun === null)
-                throw new ParserException(functionName, tokenLine, tokenColumn, "Function '" + functionName + "' does not exist.");
+                throw new ParserException(functionName, tokenLineName, tokenColumnName, "Function '" + functionName + "' does not exist.");
 
             const args: Operand[] = new Array(8);
             let argumentCount = 0;
