@@ -10,33 +10,19 @@ import { formatDate } from "../utils/formatter.ts";
 import axios from "axios";
 import type { EditorSession } from "../types/session.ts";
 import { Type } from "../editor/ast/ast.ts";
-import { useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 
-const defaultCode = `
-import bot;
-
-int main() {
-   
-}
-`.trim();
+const api = axios.create();
 
 export default function EditorPage() {
     const monacoRef = useRef<Monaco>(null);
     const editorRef = useRef<CodeEditor>(null);
-
     const [ session, setSession ] = useState<EditorSession>();
     const [ isLoading, setIsLoading ] = useState(true);
-    const [ files, setFiles ] = useState<BotFile[]>([
-        { name: "main.cbs", content: defaultCode, last_modified: Date.now(), },
-        { name: "other.cbs", content: defaultCode, last_modified: Date.now(), },
-    ].map((f: any) => ({
-        ...f,
-        is_saving: false,
-        saved_content: f.content,
-    })));
+    const [ files, setFiles ] = useState<BotFile[]>([]);
     const [ caretPos, setCaretPos ] = useState<[number, number]>([4, 4]);
     const [ currentFile, setCurrentFile ] = useState<number>(0);
-    const [ fileSize, setFileSize ] = useState<number>(files[currentFile].content.length);
+    const [ fileSize, setFileSize ] = useState<number>(0);
     const [ expiresIn, setExpiresIn ] = useState(0);
     
     function handleEditorWillMount(monaco: Monaco) {
@@ -54,7 +40,7 @@ export default function EditorPage() {
         monacoRef.current = monaco;
         editorRef.current = editor;
         editor.focus();
-        editor.setValue(files[currentFile].content);
+        editor.setValue(files[currentFile].content || "");
         editor.setPosition({lineNumber: 4, column: 4});
         editor.onDidChangeCursorPosition(e => {
             setCaretPos([e.position.lineNumber, e.position.column]);
@@ -99,6 +85,7 @@ export default function EditorPage() {
     }, [currentFile]);
 
     useEffect(() => {
+        if (!session) return;
         const interval = setInterval(() => {
             const expiresIn = Math.max(0, session!.expires_at - Date.now());
             setExpiresIn(expiresIn);
@@ -110,11 +97,31 @@ export default function EditorPage() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [session]);
 
     const params = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
+
     useEffect(() => {
-        axios.get(`/api/sessions/${params.id}`).then(r => {
+        const query = new URLSearchParams(location.search);
+        if (query.has("token")) {
+            window.localStorage.setItem("access_token", query.get("token")!);
+            navigate(location.pathname, { replace: true });
+        }
+
+        if (params.id === "demo") {
+        } else {
+            const token = window.localStorage.getItem("access_token");
+            if (token === null) {
+                navigate("/error?code=no_access", { replace: true });
+                return;
+            }
+            
+            api.defaults.headers.common.Authorization = "Bearer " + token;
+        }
+
+        api.get(`/api/sessions/${params.id}`).then(r => {
             const data = r.data;
             Object.values(data.modules).forEach((module: any) => module.functions.forEach((fun: any) => {
                 fun.return_type = Type.parseType(fun.return_type as string)!;
@@ -122,6 +129,11 @@ export default function EditorPage() {
             }));
 
             setSession(data);
+            setFiles(data.files.map((f: any) => ({
+                ...f,
+                is_saving: false,
+                saved_content: f.content,
+            }) as BotFile));
             setIsLoading(false);
         });
     }, []);
@@ -147,7 +159,8 @@ export default function EditorPage() {
             return;
         }
 
-        axios.put(`/api/sessions/${session!.id}`, {
+        console.log(api);
+        api!.put(`/api/sessions/${session!.id}`, {
             files: [{
                 id: files[currentFile].id,
                 content: editorRef.current!.getValue()
@@ -175,7 +188,7 @@ export default function EditorPage() {
                         <div className="content-buttons">
                             {<a style={{opacity: files[currentFile].is_saving ? 1 : 0}}>Saving in progress</a>}
                             <button className="save-button" onClick={handleSaveFile}
-                                disabled={files[currentFile].is_saving || files[currentFile].saved_content === editorRef!.current?.getValue()}>
+                                disabled={files[currentFile].is_saving || isLoading || files[currentFile].saved_content === editorRef!.current?.getValue()}>
                                 <img src="/icon-save.png" /> Save</button>
                         </div>
                     </div>
