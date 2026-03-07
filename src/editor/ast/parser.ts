@@ -55,15 +55,6 @@ class Parser {
         this.ast.scopes_tree.endPosition = [2048, 2048];
         this.context.scopes.push(this.ast.scopes_tree);
 
-        // register lang functions
-        this.ast.signatures.push(...[
-            { module: null, name: "strlen", return_type: Type.INT, parameter_types: [Type.STRING], completion: "strlen($1)$0" },
-            { module: null, name: "is_int", return_type: Type.INT, parameter_types: [Type.STRING], completion: "is_int($1)$0" },
-            { module: null, name: "to_int", return_type: Type.INT, parameter_types: [Type.STRING], completion: "to_int($1)$0" },
-            { module: null, name: "is_float", return_type: Type.INT, parameter_types: [Type.STRING], completion: "is_float($1)$0" },
-            { module: null, name: "to_float", return_type: Type.FLOAT, parameter_types: [Type.STRING], completion: "to_float($1)$0" },
-        ]);
-
         Object.values(modules).forEach(module => this.ast.signatures.push(...module.functions));
     }
 

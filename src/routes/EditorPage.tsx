@@ -10,6 +10,7 @@ import { formatDate } from "../utils/formatter.ts";
 import axios from "axios";
 import type { EditorSession } from "../types/session.ts";
 import { Type } from "../editor/ast/ast.ts";
+import { useParams } from "react-router";
 
 const defaultCode = `
 import bot;
@@ -23,29 +24,7 @@ export default function EditorPage() {
     const monacoRef = useRef<Monaco>(null);
     const editorRef = useRef<CodeEditor>(null);
 
-    const session: EditorSession = {
-        id: "demo",
-        expires_at: Date.now() + 1000 * 3 * 60 * 60,
-        modules: {
-            bot: {
-                name: "bot",
-                functions: [
-                    { module: "bot", name: "move", return_type: Type.INT, parameter_types: [ Type.STRING ], completion: "move($1)$0" },
-                    { module: "bot", name: "print", return_type: Type.INT, parameter_types: [ Type.STRING ], completion: "print($1)$0" },
-                ]
-            },
-            math: {
-                name: "math",
-                functions: [
-                    { module: "math", name: "cos", return_type: Type.FLOAT, parameter_types: [ Type.FLOAT ], completion: "cos($1)$0" },
-                    { module: "math", name: "sin", return_type: Type.FLOAT, parameter_types: [ Type.FLOAT ], completion: "sin($1)$0" },
-                    { module: "math", name: "sqrt", return_type: Type.FLOAT, parameter_types: [ Type.FLOAT ], completion: "sqrt($1)$0" },
-                    { module: "math", name: "test", return_type: Type.FLOAT, parameter_types: [ Type.FLOAT ], completion: "test($1)$0" },
-                ]
-            }
-        }
-    };
-
+    const [ session, setSession ] = useState<EditorSession>();
     const [ isLoading, setIsLoading ] = useState(true);
     const [ files, setFiles ] = useState<BotFile[]>([
         { name: "main.cbs", content: defaultCode, last_modified: Date.now(), },
@@ -63,7 +42,7 @@ export default function EditorPage() {
     function handleEditorWillMount(monaco: Monaco) {
         monaco.languages.register({id: "cbs"});
         setupHighlighting(monaco);
-        setupIntellisense(monaco, session);
+        setupIntellisense(monaco, session!);
         monaco.typescript.typescriptDefaults.setEagerModelSync(false);
         monaco.typescript.typescriptDefaults.setDiagnosticsOptions({
             noSemanticValidation: true,
@@ -83,7 +62,7 @@ export default function EditorPage() {
     }
 
     function handleEditorChangeContent() {
-        validate(editorRef.current as CodeEditor, monacoRef.current as Monaco, session);
+        validate(editorRef.current as CodeEditor, monacoRef.current as Monaco, session!);
         setFileSize(editorRef.current?.getValue().length || 0);
     }
 
@@ -100,7 +79,6 @@ export default function EditorPage() {
         if (idx === currentFile)
             return;
         
-        console.log('updated ' + currentFile);
         updateLocalFile();
         setCurrentFile(idx);
     }
@@ -122,7 +100,7 @@ export default function EditorPage() {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            const expiresIn = Math.max(0, session.expires_at - Date.now());
+            const expiresIn = Math.max(0, session!.expires_at - Date.now());
             setExpiresIn(expiresIn);
 
             if (expiresIn === 0) {
@@ -134,10 +112,18 @@ export default function EditorPage() {
         return () => clearInterval(interval);
     }, []);
 
+    const params = useParams();
     useEffect(() => {
-        setTimeout(() => {
+        axios.get(`/api/sessions/${params.id}`).then(r => {
+            const data = r.data;
+            Object.values(data.modules).forEach((module: any) => module.functions.forEach((fun: any) => {
+                fun.return_type = Type.parseType(fun.return_type as string)!;
+                fun.parameter_types = fun.parameter_types.map((type: string) => Type.parseType(type));
+            }));
+
+            setSession(data);
             setIsLoading(false);
-        }, 3000);
+        });
     }, []);
 
     function handleSave(ev: KeyboardEvent) {
@@ -156,12 +142,12 @@ export default function EditorPage() {
         updateLocalFile();
         updateFile(f => f.is_saving = true);
 
-        if (session.id === "demo") {
+        if (session!.id === "demo") {
             updateFile(f => (f.saved_content = editorRef.current!.getValue(), f.is_saving = false));
             return;
         }
 
-        axios.put(`/api/sessions/${session.id}`, {
+        axios.put(`/api/sessions/${session!.id}`, {
             files: [{
                 id: files[currentFile].id,
                 content: editorRef.current!.getValue()
