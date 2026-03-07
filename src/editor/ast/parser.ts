@@ -40,6 +40,8 @@ class Parser {
 
     private context: ParserContext = new ParserContext();
 
+    private errors: ParseError[] = [];
+
     private ast: AST = {
         signatures: [],
         functions: {},
@@ -113,7 +115,6 @@ class Parser {
     }
 
     parse(): BuildResult {
-        const errors: ParseError[] = [];
         try {
             while (!this.tokens.isEmpty()) {
                 const nextToken = this.tokens.peek();
@@ -146,7 +147,7 @@ class Parser {
             // todo: remember token columns as well!
             if (e instanceof ParserException) {
                 const error = e as ParserException;
-                errors.push({
+                this.errors.push({
                     startColumn: 1 + error.column,
                     endColumn: 1 + error.column + (error.token?.length || 0),
                     startLineNumber: error.line,
@@ -161,7 +162,7 @@ class Parser {
 
         return {
             ast: this.ast,
-            errors
+            errors: this.errors,
         };
     }
 
@@ -653,6 +654,16 @@ class Parser {
                 this.expect(this.tokens.next(), ",");
             }
 
+            if (fun.parameter_types.length !== argumentCount) {
+                this.errors.push({
+                    startColumn: tokenColumn + 1,
+                    endColumn: tokenColumn + fun.name.length + 1,
+                    startLineNumber: tokenLine,
+                    endLineNumber: tokenLine,
+                    message: `Function "${fun.name}" expects ${fun.parameter_types.length} arguments but ${argumentCount} are provided.`,
+                    severity: monaco.MarkerSeverity.Error,
+                });
+            }
             return new Call(fun, args.slice(0, argumentCount));
         }
         else {
