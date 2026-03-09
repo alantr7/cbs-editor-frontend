@@ -276,8 +276,20 @@ class Parser {
             if (statement === null)
                 break;
 
-            if ((!(statement instanceof If) && !(statement instanceof For)) || (statement instanceof While && (statement as While).isDoWhile))
-                this.expect(this.tokens.next(), ";", this.tokens.getPrevLine(), this.tokens.getPrevColumn());
+            if ((!(statement instanceof If) && !(statement instanceof For)) || (statement instanceof While && (statement as While).isDoWhile)) {
+                if (this.tokens.peek() !== ";") {
+                    this.errors.push({
+                        startLineNumber: this.tokens.getPrevLine(),
+                        endLineNumber: this.tokens.getPrevLine(),
+                        startColumn: this.tokens.getColumn() + 1,
+                        endColumn: this.tokens.getColumn() + 1,
+                        severity: monaco.MarkerSeverity.Error,
+                        message: "Missing semicolon (;)."
+                    });
+                } else {
+                    this.tokens.advance();
+                }
+            }
 
             body[statementCount] = statement;
         }
