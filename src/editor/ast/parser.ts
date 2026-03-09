@@ -146,7 +146,6 @@ class Parser {
 
         for (const fun of Object.values(module.functions)) {
             this.ast.signatures.push(fun);
-            console.log("imported " + fun.name);
         }
     }
 
@@ -261,7 +260,6 @@ class Parser {
         const body = new Array(128);
         let statementCount = 0;
 
-        console.log('parsing body.');
         for (; statementCount < body.length; statementCount++) {
             if (this.tokens.peek() === "}")
                 break;
@@ -326,21 +324,6 @@ class Parser {
         if (parameterType != null) {
             // todo: check if name is null and throw an error if it is
             return this.parseVariableDeclare(parameterType, this.tokens.next()!);
-        }
-
-        // todo: array access
-        const access: Operand[] = [];
-        if (this.tokens.peek() === "[") {
-            while (this.tokens.peek() === "[") {
-                this.tokens.advance();
-                const expr = this.parseExpression();
-                if (expr === null || expr.getResultType() != Type.INT) {
-                    throw new ParserException("", this.tokens.getLine(), this.tokens.getColumn(), "Not an integer!");
-                }
-
-                access.push(expr);
-                this.expect(this.tokens.next(), "]");
-            }
         }
 
         // variable assign
