@@ -27,9 +27,9 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
     registerSnippet(monaco, "f", "for", "for ($1; $2; $3) {\n\t$0\n}");
     registerSnippet(monaco, "r", "return", "return $1;");
 
-    // imported functions
+    // pressing ctrl + space. modules + variable names + functions
     monaco.languages.registerCompletionItemProvider("cbs", {
-        triggerCharacters: ["."],
+        triggerCharacters: ["", "."],
         provideCompletionItems: function (model, position) {
             const textUntilPosition = model.getValueInRange({
                 startLineNumber: position.lineNumber,
@@ -37,76 +37,58 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
                 endLineNumber: position.lineNumber,
                 endColumn: position.column
             });
-
-            const match = textUntilPosition.match(/([a-zA-Z_]\w*)\.$/);
-            if (!match) return { suggestions: [] };
-
-            const moduleName = match[1];
-            const functions = session.modules[moduleName].functions;
-            if (!functions || moduleName === "lang") return { suggestions: [] };
-
-            const suggestions: any[] = functions.map(fn => ({
-                label: fn.name,
-                kind: monaco.languages.CompletionItemKind.Function,
-                insertText: fn.completion,
-                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-            }));
-            return { suggestions };
-        }
-    });
-
-    // pressing ctrl + space. modules + variable names + functions
-    monaco.languages.registerCompletionItemProvider("cbs", {
-        triggerCharacters: [],
-        provideCompletionItems: function (_, position) {
             const suggestions: any[] = [];
 
             const scope = getScopeRecursively(latestAst.scopes_tree, position);
             console.log('latest scope: ', latestAst.scopes_tree, scope);
 
-            if (scope && scope.beginPosition[0] === 0) {
-                // imports
-                suggestions.push({
-                    label: "import",
-                    kind: monaco.languages.CompletionItemKind.Keyword,
-                    insertText: "import $1;$0",
-                    sortText: "0_import",
-                    detail: "module",
-                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                });
-            }
+            const match = textUntilPosition.match(/([a-zA-Z_]\w*)\.$/);
+            if (match) {
+                const moduleName = match[1];
+                const functions = session.modules[moduleName].functions;
+                if (!functions || moduleName === "lang") return { suggestions: [] };
 
-            if (scope && scope.beginPosition[0] !== 0) {
-                // modules
-                suggestions.push(...Object.keys(session.modules).filter(m => m !== "lang").map(m => ({
-                    label: m,
-                    kind: monaco.languages.CompletionItemKind.Module,
-                    insertText: m + ".",
-                    sortText: "1_" + m,
-                    detail: "module",
-                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                })));
-
-                // local variables            
-                suggestions.push(...Object.keys(scope.variables).map(v => ({
-                    label: v,
-                    kind: monaco.languages.CompletionItemKind.Variable,
-                    insertText: v,
-                    sortText: "0_" + v,
-                    detail: scope.variables[v].type.name,
-                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                })));
-
-                // functions
-                suggestions.push(...latestAst.signatures.filter(f => f.module === null).map(f => ({
-                    label: f.name,
+                const suggestions: any[] = functions.map(fn => ({
+                    label: fn.name,
                     kind: monaco.languages.CompletionItemKind.Function,
-                    insertText: f.name + "($1)$0",
-                    sortText: "2_" + f.name,
-                    detail: f.return_type.name,
+                    insertText: fn.completion,
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                })));
+                }));
+                return { suggestions };
             }
+
+            // modules
+            suggestions.push(...Object.keys(session.modules).filter(m => m !== "lang").map(m => ({
+                label: m,
+                kind: monaco.languages.CompletionItemKind.Module,
+                insertText: m + ".",
+                sortText: "1_" + m,
+                detail: "module",
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                command: {
+                    id: "editor.action.triggerSuggest"
+                }
+            })));
+
+            // local variables            
+            suggestions.push(...Object.keys(scope.variables).map(v => ({
+                label: v,
+                kind: monaco.languages.CompletionItemKind.Variable,
+                insertText: v,
+                sortText: "0_" + v,
+                detail: scope.variables[v].type.name,
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+            })));
+
+            // functions
+            suggestions.push(...latestAst.signatures.filter(f => f.module === null).map(f => ({
+                label: f.name,
+                kind: monaco.languages.CompletionItemKind.Function,
+                insertText: f.name + "($1)$0",
+                sortText: "2_" + f.name,
+                detail: f.return_type.name,
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+            })));
 
             return { suggestions };
         }
