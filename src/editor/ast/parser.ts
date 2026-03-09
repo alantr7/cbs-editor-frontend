@@ -1,4 +1,5 @@
 import type { EditorSession, ModuleRepository } from "../../types/session";
+import { formatOrdinal } from "../../utils/formatter";
 import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, For, Function, If, Literal, Logical, Operand, Operator, Ret, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
 import type { TokenQueue } from "./tokenizer";
 import * as monaco from 'monaco-editor';
@@ -603,9 +604,18 @@ class Parser {
                     break;
                 }
 
-                console.log('parsing argument ' + this.tokens.peek());
-
                 const argument = this.parseExpression();
+                if (argument && argumentCount < fun.parameter_types.length && argument.getResultType() !== fun.parameter_types[argumentCount]) {
+                    this.errors.push({
+                        startLineNumber: tokenLineName,
+                        endLineNumber: tokenLineName,
+                        startColumn: tokenColumnName + 1,
+                        endColumn: tokenColumnName + (functionName?.length || 0) + 1,
+                        message: `Expected ${fun.parameter_types[argumentCount].name} as ${formatOrdinal(argumentCount + 1)} parameter but received ${argument.getResultType().name} instead.`,
+                        severity: monaco.MarkerSeverity.Error,
+                    });
+                }
+
                 args[argumentCount] = argument as Operand;
 
                 if (this.tokens.peek() === ")") {
@@ -618,8 +628,8 @@ class Parser {
 
             if (fun.parameter_types.length !== argumentCount) {
                 this.errors.push({
-                    startColumn: tokenColumn + 1,
-                    endColumn: tokenColumn + fun.name.length + 1,
+                    startColumn: tokenColumnName + 1,
+                    endColumn: tokenColumnName + fun.name.length + 1,
                     startLineNumber: tokenLine,
                     endLineNumber: tokenLine,
                     message: `Function "${fun.name}" expects ${fun.parameter_types.length} arguments but ${argumentCount} are provided.`,
