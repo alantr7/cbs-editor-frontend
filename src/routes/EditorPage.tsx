@@ -21,7 +21,7 @@ export default function EditorPage() {
     const [ isLoading, setIsLoading ] = useState(true);
     const [ isEditorLoading, setIsEditorLoading ] = useState(true);
     const [ files, setFiles ] = useState<BotFile[]>([]);
-    const [ caretPos, setCaretPos ] = useState<[number, number]>([4, 4]);
+    const [ caretPos, setCaretPos ] = useState<[number, number]>([4, 29]);
     const [ currentFile, setCurrentFile ] = useState<number>(0);
     const [ fileSize, setFileSize ] = useState<number>(0);
     const [ expiresIn, setExpiresIn ] = useState(0);
@@ -42,7 +42,7 @@ export default function EditorPage() {
         editorRef.current = editor;
         editor.focus();
         editor.setValue(files[currentFile].content || "");
-        editor.setPosition({lineNumber: 4, column: 4});
+        editor.setPosition({lineNumber: 4, column: 29});
         editor.onDidChangeCursorPosition(e => {
             setCaretPos([e.position.lineNumber, e.position.column]);
         });
