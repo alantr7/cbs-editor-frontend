@@ -70,8 +70,8 @@ class Parser {
                 // - global variables
                 // - functions
 
-                // skip comments
-                if (nextToken?.startsWith("//")) {
+                // skip comments and semicolons
+                if (nextToken?.startsWith("//") || nextToken === ";") {
                     this.tokens.advance();
                     continue;
                 }
@@ -265,6 +265,12 @@ class Parser {
         for (; statementCount < body.length; statementCount++) {
             if (this.tokens.peek() === "}")
                 break;
+
+            if (this.tokens.peek() === ";") {
+                this.tokens.advance();
+                statementCount--;
+                continue;
+            }
 
             const statement = this.parseStatement();
             if (statement === null)
