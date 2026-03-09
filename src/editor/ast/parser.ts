@@ -122,7 +122,18 @@ class Parser {
         if (name === null)
             throw new ParserException(" ", tokenLine, tokenColumn + "import ".length, "Expected module name.");
 
-        this.expect(this.tokens.next(), ";", tokenLine1, tokenColumn2 + name.length, "Missing semicolon (;).");
+        if (this.tokens.peek() !== ";") {
+            this.errors.push({
+                startLineNumber: tokenLine1,
+                endLineNumber: tokenLine1,
+                startColumn: tokenColumn2 + name.length,
+                endColumn: tokenColumn2 + name.length + 1,
+                severity: monaco.MarkerSeverity.Error,
+                message: "Missing semicolon (;)."
+            });
+        } else {
+            this.tokens.advance();
+        }
 
         const module = this.moduleRepository[name];
         if (module === null || module === undefined || name === "lang") {
