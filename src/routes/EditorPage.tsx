@@ -19,6 +19,7 @@ export default function EditorPage() {
     const editorRef = useRef<CodeEditor>(null);
     const [ session, setSession ] = useState<EditorSession>();
     const [ isLoading, setIsLoading ] = useState(true);
+    const [ isEditorLoading, setIsEditorLoading ] = useState(true);
     const [ files, setFiles ] = useState<BotFile[]>([]);
     const [ caretPos, setCaretPos ] = useState<[number, number]>([4, 4]);
     const [ currentFile, setCurrentFile ] = useState<number>(0);
@@ -45,6 +46,7 @@ export default function EditorPage() {
         editor.onDidChangeCursorPosition(e => {
             setCaretPos([e.position.lineNumber, e.position.column]);
         });
+        setIsEditorLoading(false);
     }
 
     function handleEditorChangeContent() {
@@ -172,7 +174,7 @@ export default function EditorPage() {
 
     return (
         <>
-            <div className={`loading-overlay ${isLoading && "visible"}`}>
+            <div className={`loading-overlay ${(isLoading || isEditorLoading) && "visible"}`}>
                 Loading session<br />
                 <small style={{fontSize: "14px"}}>Please wait - this won't take long</small>
             </div>
