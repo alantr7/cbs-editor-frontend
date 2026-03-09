@@ -146,7 +146,6 @@ class Parser {
 
         for (const fun of Object.values(module.functions)) {
             this.ast.signatures.push(fun);
-            console.log("imported " + fun.name);
         }
     }
 
@@ -261,7 +260,6 @@ class Parser {
         const body = new Array(128);
         let statementCount = 0;
 
-        console.log('parsing body.');
         for (; statementCount < body.length; statementCount++) {
             if (this.tokens.peek() === "}")
                 break;
@@ -326,8 +324,6 @@ class Parser {
             // todo: check if name is null and throw an error if it is
             return this.parseVariableDeclare(parameterType, this.tokens.next()!);
         }
-
-        console.log('next token: ' + this.tokens.peek());
 
         // variable assign
         if (this.tokens.peek() === "=") {
@@ -528,8 +524,6 @@ class Parser {
             const pop = stack.pop();
             postfix.push(this.parseOperator(pop as string) as Operand);
         }
-
-        console.log('postfix', postfix);
 
         for (let i = 0; i < postfix.length; i++) {
             const operand = postfix[i];
