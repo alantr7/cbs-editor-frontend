@@ -472,6 +472,16 @@ export class Type {
     static STRING   = new Type("string");
     static VOID     = new Type("void");
 
+    accepts(type: Type): boolean {
+        if (type === this)
+            return true;
+        
+        if (type !== Type.INT)
+            return false;
+
+        return this == Type.FLOAT;
+    }
+
     static parseType(input: string): Type | null {
         switch (input) {
             case "int":     return Type.INT;
