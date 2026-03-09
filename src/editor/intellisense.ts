@@ -29,7 +29,7 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
 
     // pressing ctrl + space. modules + variable names + functions
     monaco.languages.registerCompletionItemProvider("cbs", {
-        triggerCharacters: ["", "."],
+        triggerCharacters: ["", ".", " "],
         provideCompletionItems: function (model, position) {
             const textUntilPosition = model.getValueInRange({
                 startLineNumber: position.lineNumber,
@@ -42,9 +42,9 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
             const scope = getScopeRecursively(latestAst.scopes_tree, position);
             console.log('latest scope: ', latestAst.scopes_tree, scope);
 
-            const match = textUntilPosition.match(/([a-zA-Z_]\w*)\.$/);
-            if (match) {
-                const moduleName = match[1];
+            const matchModuleAccess = textUntilPosition.match(/([a-zA-Z_]\w*)\.$/);
+            if (matchModuleAccess) {
+                const moduleName = matchModuleAccess[1];
                 const functions = session.modules[moduleName].functions;
                 if (!functions || moduleName === "lang") return { suggestions: [] };
 
@@ -52,6 +52,17 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
                     label: fn.name,
                     kind: monaco.languages.CompletionItemKind.Function,
                     insertText: fn.completion,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                }));
+                return { suggestions };
+            }
+
+            const matchModuleImport = textUntilPosition.match(/import( )+$/);
+            if (matchModuleImport) {
+                const suggestions: any[] = Object.keys(session.modules).filter(m => m !== "lang").map(module => ({
+                    label: module,
+                    kind: monaco.languages.CompletionItemKind.Function,
+                    insertText: module + ";",
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
                 }));
                 return { suggestions };
