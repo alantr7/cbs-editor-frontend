@@ -628,7 +628,7 @@ class Parser {
                 }
 
                 const argument = this.parseExpression();
-                if (argument && argumentCount < fun.parameter_types.length && argument.getResultType() !== fun.parameter_types[argumentCount]) {
+                if (argument && argumentCount < fun.parameter_types.length && !fun.parameter_types[argumentCount].accepts(argument.getResultType())) {
                     this.errors.push({
                         startLineNumber: tokenLineName,
                         endLineNumber: tokenLineName,
