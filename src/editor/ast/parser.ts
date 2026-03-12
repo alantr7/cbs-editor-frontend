@@ -432,10 +432,14 @@ class Parser {
                 break;
             }
 
-            // TODO: Used !isOperator before, it must support parenthesis!
             if (isNumber(next)) {
                 postfix.push(new Literal(Literal.INT, parseInt(next)));
+                expectsOperator = true;
+            }
 
+            else if (isFloat(next)) {
+                console.log("IT IS A FLOAT!");
+                postfix.push(new Literal(Literal.FLOAT, parseFloat(next)));
                 expectsOperator = true;
             }
 
@@ -443,18 +447,10 @@ class Parser {
                 postfix.push(new Cast(this.parseExpression() as StmtExpr, next === "(int)" ? Type.INT : Type.FLOAT));
             }
 
-            // todo: should i do null? probs not
-//            else if (ParserHelper.isNull(next)) {
-//                postfix.add(new LiteralExpression("null", LiteralExpression.NULL));
-//                j++;
-//
-//                expectsOperator = true;
-//            }
             else if (isOperator(next)) {
                 if (next === "(") {
                     stack.push(next);
                     parenthesisOpen++;
-//                }
                 } else {
                     if (next === ")") {
                         if (stack.length === 0)
@@ -829,6 +825,10 @@ export function isCastOperator(input: string): boolean {
 
 export function isNumber(input: string): boolean {
     return input.match(/^\d+$/) !== null;
+}
+
+export function isFloat(input: string): boolean {
+    return input.match(/^-?((\d+\.\d+f?)|(\d+f))$/) !== null;
 }
 
 export function isBoolean(input: string): boolean {

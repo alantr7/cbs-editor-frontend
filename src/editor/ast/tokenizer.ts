@@ -1,4 +1,4 @@
-import { isOperator, isUnaryOperator } from "./parser";
+import { isFloat, isOperator, isUnaryOperator } from "./parser";
 
 export function tokenize(input: string[]) {
     const lines: string[][] = [];
@@ -35,8 +35,6 @@ function tokenizeLine(line: string): [string[], number[]] {
     let start = 0;
 
     if (line.startsWith("//")) {
-        // tokens.push(line);
-        // columns.push(0);
         return [tokens, columns];
     }
 
@@ -55,6 +53,9 @@ function tokenizeLine(line: string): [string[], number[]] {
             continue;
 
         if (isSymbol(character)) {
+            if (character == '.' && line.substring(start, i).match(/^\d+/))
+                continue;
+
             let token: string | null = null;
 
             if (character == '=' && tokens[tokens.length - 1] !== undefined) {
@@ -84,13 +85,19 @@ function tokenizeLine(line: string): [string[], number[]] {
             if (token.trim().length !== 0) {
                 // Check if it's a negative number
                 // todo: verify if works correctly!
-                if (token.match(/^\d+$/) && tokens.length > 1) {
+                if (token.match(/^(\d+\.\d+)|(\d+)f?$/) && tokens.length > 1) {
                     const previous = tokens[tokens.length - 1];
                     const previous2 = tokens[tokens.length - 2];
 
                     if (previous === "-" && previous2.length === 1 && isSymbol(previous2.charAt(0))) {
                         tokens.pop();
                         token = "-" + token;
+                    }
+
+                    if (isFloat(token)) {
+                        tokens.push(token);
+                        start = i;
+                        continue;
                     }
                 }
                 tokens.push(token);
