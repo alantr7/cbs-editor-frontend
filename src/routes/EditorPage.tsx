@@ -11,6 +11,7 @@ import axios from "axios";
 import type { EditorSession } from "../types/session.ts";
 import { Type } from "../editor/ast/ast.ts";
 import { useLocation, useNavigate, useParams } from "react-router";
+import { Changelogs } from "../editor/Changelogs.tsx";
 
 const api = axios.create();
 
@@ -25,6 +26,7 @@ export default function EditorPage() {
     const [ currentFile, setCurrentFile ] = useState<number>(0);
     const [ fileSize, setFileSize ] = useState<number>(0);
     const [ expiresIn, setExpiresIn ] = useState(0);
+    const [ isChangelogOpen, setIsChangelogOpen ] = useState(false);
     
     function handleEditorWillMount(monaco: Monaco) {
         monaco.languages.register({id: "cbs"});
@@ -196,7 +198,7 @@ export default function EditorPage() {
                     </div>
                 </div>
                 <div className="editor-container" onKeyDown={handleSave}>
-                    <Sidebar files={files} currentFile={currentFile} openFile={handleOpenFile} />
+                    <Sidebar files={files} currentFile={currentFile} openFile={handleOpenFile} openChangelog={() => setIsChangelogOpen(true)} />
                     <Editor
                         defaultLanguage="cbs"
                         options={{
@@ -218,6 +220,8 @@ export default function EditorPage() {
                     <span>Position: <span style={{color: "lightgray"}}>{caretPos[0]}, {caretPos[1]}</span></span>
                     <span>Size: <span style={{color: "lightgray"}}>{fileSize} / 2048</span></span>
                 </div>
+
+                {isChangelogOpen && <Changelogs close={() => setIsChangelogOpen(false)}></Changelogs>}
             </div>}
         </>
     )

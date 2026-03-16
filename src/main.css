@@ -228,6 +228,10 @@ a {
     margin: 2px 0;
     color: #b8b8b8;
     font-family: Space Mono, sans-serif;
+    cursor: pointer;
+}
+.footer button:hover {
+    color: #d8d8d8;
 }
 
 .status-bar {
@@ -242,4 +246,51 @@ a {
 
 .status-bar > span {
     margin-left: 24px;
+}
+
+.changelog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0,.6);
+}
+.changelog {
+    width: 700px;
+    /* height: 700px; */
+    margin: 64px auto;
+    background-color: #1a1c21;
+    /* border: 1px solid hsla(0, 0%, 100%, .15); */
+    font-family: 'Space Mono', sans-serif;
+    font-size: 16px;
+    padding: 12px 32px;
+    color: #c9c9c9;
+    outline: 0;
+    cursor: default;
+    box-shadow: 0 4px 12px 4px rgba(0, 0, 0, .3);
+}
+.changelog h3 {
+    color: #b8b8b8;
+    font-size: 13px;
+    text-align: center;
+    margin: 10px;
+    margin-bottom: 16px;
+}
+.changelog h4 {
+    margin: 0;
+    font-size: 18px;
+}
+.changelog small {
+    font-size: 13px;
+    margin: 0;
+    color: #8b8b8b;
+}
+.changelog ul {
+    margin-top: 12px;
+    padding-left: 0;
+}
+.changelog li {
+    margin-left: 20px;
 }
