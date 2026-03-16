@@ -187,7 +187,7 @@ export default function EditorPage() {
                         <div className="open-file">
                             Editing {files[currentFile].name}
                             <span className="file-details">Session expires in: <span style={{color: "lightgray"}}>{formatDate(new Date(expiresIn), "HH:MM:SS")}</span></span>
-                            <span className="file-details"> Author: <img src="https://minotar.net/avatar/alant7/22" /> <span style={{color: "lightgray"}}>Demo</span></span>
+                            <span className="file-details"> Author: <img src={`https://minotar.net/avatar/${session?.author || "steve"}/22`} /> <span style={{color: "lightgray"}}>{session?.author || "Steve"}</span></span>
                         </div>
                         <div className="content-buttons">
                             {<a style={{opacity: files[currentFile].is_saving ? 1 : 0}}>Saving in progress</a>}
