@@ -1,0 +1,11 @@
+{
+    "title": "2.0: New editor!",
+    "date": "March 16th, 2026",
+    "items": [
+        "Replaced old engine with Monaco editor",
+        "Added support for the new scripting language",
+        "Added auto-completion, code parsing and improved error highlighting",
+        "Added status bar in the bottom which displays cursor and file size info",
+        "Added functional changelogs modals"
+    ]
+}
