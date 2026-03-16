@@ -49,7 +49,11 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
                 if (!functions || moduleName === "lang") return { suggestions: [] };
 
                 const suggestions: any[] = functions.map(fn => ({
-                    label: fn.name,
+                    label: {
+                        label: `${fn.name}`,
+                        detail: `(${fn.parameter_types.map(param => param.name).join(", ")})`,
+                        description: fn.return_type?.name,
+                    },
                     kind: monaco.languages.CompletionItemKind.Function,
                     insertText: fn.completion,
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
