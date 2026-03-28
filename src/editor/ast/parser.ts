@@ -184,7 +184,7 @@ class Parser {
 
     parseFunction(type: Type, name: string): void {
         this.expect(this.tokens.next(), "(");
-        const functionScope = this.context.getCurrentScope().createChild([this.tokens.getLine(), this.tokens.getColumn()], false);
+        const functionScope = this.context.getCurrentScope().createChild([this.tokens.getLine(), this.tokens.getColumn()], false, false);
         this.context.scopes.push(functionScope);
 
         const parameterTypes: Type[] = new Array(8);
@@ -702,7 +702,9 @@ class Parser {
         this.expect(this.tokens.next(), ")");
         this.expect(this.tokens.next(), "{");
 
+        this.context.nestScope(false, true);
         const body = this.parseBody();
+        this.context.scopes.pop();
 
         this.expect(this.tokens.next(), "}");
 
@@ -715,7 +717,9 @@ class Parser {
             return new If(condition, body, this.parseIf());
         } else {
             this.expect(this.tokens.next(), "{");
+            this.context.nestScope(false, true);
             const elseBody = this.parseBody();
+            this.context.scopes.pop();
             this.expect(this.tokens.next(), "}");
             return new If(condition, body, new If(null, elseBody, null));
         }
@@ -729,7 +733,9 @@ class Parser {
 
         this.expect(this.tokens.next(), ")");
         this.expect(this.tokens.next(), "{");
+        this.context.nestScope(false, true);
         const body = this.parseBody();
+        this.context.scopes.pop();
         this.expect(this.tokens.next(), "}");
 
         return new While(condition as Operand, body);
@@ -738,7 +744,9 @@ class Parser {
     parseDoWhile(): While {
         this.tokens.advance();
         this.expect(this.tokens.next(), "{");
+        this.context.nestScope(false, true);
         const body = this.parseBody();
+        this.context.scopes.pop();
         this.expect(this.tokens.next(), "}");
 
         this.expect(this.tokens.next(), "while");
@@ -753,6 +761,8 @@ class Parser {
         this.tokens.advance();
         this.expect(this.tokens.next(), "(");
 
+        const scope = this.context.nestScope(false, true);
+        scope.beginPosition = [this.tokens.getLine(), this.tokens.getColumn()];
         const init = this.tokens.peek() === ";" ? null : this.parseStatement(true);
 
         this.expect(this.tokens.next(), ";");
@@ -766,6 +776,8 @@ class Parser {
         this.expect(this.tokens.next(), "{");
         const body = this.parseBody();
         this.expect(this.tokens.next(), "}");
+        scope.endPosition = [this.tokens.getLine(), this.tokens.getColumn()];
+        this.context.scopes.pop();
 
         return new For(init, condition, update, body);
     }
@@ -880,6 +892,13 @@ export class ParserContext {
         return this.scopes[this.scopes.length - 1];
     }
 
+    nestScope(copyLocals: boolean, copyVariableOffset: boolean): Scope {
+        const scope = this.getCurrentScope().createChild([0, 0], copyLocals, copyVariableOffset);
+        this.scopes.push(scope);
+
+        return scope;
+    }
+
 }
 
 export class Scope {
@@ -904,7 +923,7 @@ export class Scope {
         this.beginPosition = beginPosition;
     }
 
-    createChild(beginPosition: [ number, number ], copyLocals: boolean): Scope {
+    createChild(beginPosition: [ number, number ], copyLocals: boolean, copyVariableOffset: boolean): Scope {
         const child = new Scope(beginPosition);
         this.children.push(child);
 
@@ -916,6 +935,9 @@ export class Scope {
             for (const key in this.variables) {
                 child.localVariables[key] = this.localVariables[key];
             }
+
+        if (copyVariableOffset)
+            child.nextVariableOffset = this.nextVariableOffset;
 
         return child;
     }
