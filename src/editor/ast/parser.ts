@@ -872,7 +872,7 @@ export function isCastOperator(input: string): boolean {
 }
 
 export function isNumber(input: string): boolean {
-    return input.match(/^\d+$/) !== null;
+    return input.match(/^-?\d+$/) !== null;
 }
 
 export function isFloat(input: string): boolean {
