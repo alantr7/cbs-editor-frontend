@@ -39,6 +39,19 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
             });
             const suggestions: any[] = [];
 
+            // check if inside a string
+            let isInsideString = false;
+            for (let i = 0; i < textUntilPosition.length; i++) {
+                // todo: handling quote escaping
+                if (textUntilPosition[i] === '"') {
+                    isInsideString = !isInsideString;
+                }
+            }
+
+            if (isInsideString) {
+                return  { suggestions };
+            }
+
             const scope = getScopeRecursively(latestAst.scopes_tree, position);
             console.log('latest scope: ', latestAst.scopes_tree, scope);
 
@@ -125,7 +138,27 @@ function getScopeRecursively(scope: Scope, position: Position) {
 function registerSnippet(monaco: Monaco, trigger: string, label: string, text: string) {
     monaco.languages.registerCompletionItemProvider("cbs", {
         triggerCharacters: [trigger],
-        provideCompletionItems: function (_, position) {
+        provideCompletionItems: function (model, position) {
+            const textUntilPosition = model.getValueInRange({
+                startLineNumber: position.lineNumber,
+                startColumn: 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column
+            });
+
+            // check if inside a string
+            let isInsideString = false;
+            for (let i = 0; i < textUntilPosition.length; i++) {
+                // todo: handling quote escaping
+                if (textUntilPosition[i] === '"') {
+                    isInsideString = !isInsideString;
+                }
+            }
+
+            if (isInsideString) {
+                return  { suggestions: [] };
+            }
+
             const scope = getScopeRecursively(latestAst.scopes_tree, position);
             if (scope && scope.beginPosition[0] !== 0) {
                 const suggestions: any[] = [{
