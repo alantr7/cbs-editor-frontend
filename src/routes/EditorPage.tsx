@@ -12,6 +12,7 @@ import type { EditorSession } from "../types/session.ts";
 import { Type } from "../editor/ast/ast.ts";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { Changelogs } from "../editor/Changelogs.tsx";
+import PromptModal from "../editor/PromptModal.tsx";
 
 const api = axios.create();
 
@@ -27,6 +28,7 @@ export default function EditorPage() {
     const [ fileSize, setFileSize ] = useState<number>(0);
     const [ expiresIn, setExpiresIn ] = useState(0);
     const [ isChangelogOpen, setIsChangelogOpen ] = useState(false);
+    const [ isAiPromptOpen, setIsAiPromptOpen ] = useState(false);
     
     function handleEditorWillMount(monaco: Monaco) {
         monaco.languages.register({id: "cbs"});
@@ -198,7 +200,12 @@ export default function EditorPage() {
                     </div>
                 </div>
                 <div className="editor-container" onKeyDown={handleSave}>
-                    <Sidebar files={files} currentFile={currentFile} openFile={handleOpenFile} openChangelog={() => setIsChangelogOpen(true)} />
+                    <Sidebar
+                        files={files}
+                        currentFile={currentFile}
+                        openFile={handleOpenFile}
+                        openChangelog={() => setIsChangelogOpen(true)}
+                        showAiPrompt={() => setIsAiPromptOpen(true)} />
                     <Editor
                         defaultLanguage="cbs"
                         options={{
@@ -221,7 +228,8 @@ export default function EditorPage() {
                     <span>Size: <span style={{color: "lightgray"}}>{fileSize} / 2048</span></span>
                 </div>
 
-                {isChangelogOpen && <Changelogs close={() => setIsChangelogOpen(false)}></Changelogs>}
+                {isChangelogOpen && <Changelogs close={() => setIsChangelogOpen(false)} />}
+                {isAiPromptOpen && <PromptModal close={() => setIsAiPromptOpen(false)} />}
             </div>}
         </>
     )
