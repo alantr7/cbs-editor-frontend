@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
 body {
     margin: 0;
@@ -153,7 +154,7 @@ body {
     flex-grow: 1;
 }
 .file {
-    padding: 5px 8px 5px 40px;
+    padding: 3px 8px 4px 40px;
     margin: 4px auto;
     color: #d3d3d3;
     width: 220px;
@@ -169,9 +170,9 @@ body {
 .file::before {
     position: absolute;
     left: 14px;
-    top: 8px;
-    width: 18px;
-    height: 18px;
+    top: 7px;
+    width: 16px;
+    height: 16px;
     content: " ";
     background-image: url(/icon-file.png);
     background-size: 100%;
@@ -182,20 +183,32 @@ body {
     background-color: #26282c;
 }
 .file.active {
-    background-color: rgba(67,114,245,.12);
+    background-color: #26282c;
 }
 a {
     color: inherit;
     text-decoration: none;
 }
+.file.ai::after {
+    content: "AI Prompt";
+    background: linear-gradient(45deg, #a3b4ff, #e384f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: "Space Mono", sans-serif;
+    font-weight: 600;
+    background-clip: text;
+}
+.file.ai::before {
+    background-image: url(https://img.icons8.com/?size=100&id=POBc2SrrhhnF&format=png&color=000000);
+}
 .file.docs {
-    padding: 8px 12px 8px 40px;
-    font-weight: 700;
+    padding: 3px 12px 4px 40px;
+    font-weight: 600;
     position: sticky;
     bottom: 0;
 }
 .file.docs::before {
-    top: 11px;
+    top: 7px;
     background-image: url(/icon-docs.png);
 }
 
@@ -248,22 +261,23 @@ a {
     margin-left: 24px;
 }
 
-.changelog-overlay {
+.changelog-overlay, .ai-prompt-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    overflow: hidden;
+    overflow-y: auto;
     background-color: rgba(0, 0, 0,.6);
 }
-.changelog {
+.changelog, .ai-prompt {
     width: 700px;
     /* height: 700px; */
     margin: 64px auto;
     background-color: #1a1c21;
     /* border: 1px solid hsla(0, 0%, 100%, .15); */
-    font-family: 'Space Mono', sans-serif;
+    font-family: 'Montserrat', sans-serif;
+    line-height: 24px;
     font-size: 16px;
     padding: 12px 32px;
     color: #c9c9c9;
@@ -271,8 +285,12 @@ a {
     cursor: default;
     box-shadow: 0 4px 12px 4px rgba(0, 0, 0, .3);
 }
-.changelog h3 {
-    color: #b8b8b8;
+.ai-prompt {
+    width: 840px;
+    margin: 32px auto;
+}
+.changelog h3, .ai-prompt h3 {
+    color: #e8e8e8;
     font-size: 13px;
     text-align: center;
     margin: 10px;
@@ -293,4 +311,25 @@ a {
 }
 .changelog li {
     margin-left: 20px;
+}
+.ai-prompt pre {
+    font-size: 14px;
+    background-color: rgb(36, 36, 44);
+    padding: 12px;
+    white-space: break-spaces;
+    cursor: pointer;
+    outline: 2px solid transparent;
+    transition: outline-color .2s;
+}
+.ai-prompt pre:hover {
+    background-color: rgb(38, 38, 49);
+}
+.ai-prompt pre:active {
+    background-color: rgb(31, 31, 43);
+}
+.ai-prompt pre[data-copied="true"] {
+    outline-color: #a6e3a1;
+}
+.ai-prompt small {
+    color: #a6e3a1;
 }

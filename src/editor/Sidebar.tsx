@@ -4,18 +4,20 @@ interface SidebarProps {
     files: BotFile[],
     currentFile: number,
     openFile: (index: number) => void,
+    showAiPrompt: () => void,
     openChangelog: () => void,
 }
 
-export default function Sidebar({files, currentFile, openFile, openChangelog}: SidebarProps) {
+export default function Sidebar({files, currentFile, openFile, openChangelog, showAiPrompt}: SidebarProps) {
     return <div className="sidebar">
         <div className="files-container">
             {files.map((file, idx) => <div key={file.name} className={`file ${idx === currentFile && "active"}`} onClick={() => openFile(idx)}>
                 {file.name}
             </div>)}
             <hr />
+            <div onClick={showAiPrompt} className="file ai"></div>
             <a href="https://github.com/alantr7/codebots/wiki/Scripting-Language" target="_blank">
-                <div className="file docs">SCRIPT DOCS</div>
+                <div className="file docs">Documentation</div>
             </a>
         </div>
         <div className="footer">
