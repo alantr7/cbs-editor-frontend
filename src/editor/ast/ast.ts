@@ -161,7 +161,7 @@ export class If extends StmtExpr {
         return false;
     }
     getResultType(): Type {
-        return Type.INT;
+        return Type.VOID;
     }
 }
 
@@ -195,6 +195,28 @@ export class For extends StmtExpr {
     }
     getResultType(): Type {
         // SHOULD NOT HAPPEN!
+        return Type.VOID;
+    }
+}
+
+export class LoopCommand extends StmtExpr {
+    static CONTINUE = 0;
+    static BREAK = 1;
+
+    type: number;
+
+    constructor(type: number) {
+        super();
+        this.type = type;
+    }
+
+    isExpression(): boolean {
+        return false;
+    }
+    isStatement(): boolean {
+        return true;
+    }
+    getResultType(): Type {
         return Type.VOID;
     }
 }

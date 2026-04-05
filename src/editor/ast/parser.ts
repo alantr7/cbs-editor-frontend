@@ -1,6 +1,6 @@
 import type { EditorSession, ModuleRepository } from "../../types/session";
 import { formatOrdinal } from "../../utils/formatter";
-import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, For, Function, If, Literal, Logical, Operand, Operator, Ret, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
+import { Access, Arithmetic, Assign, Call, Cast, Compare, Concat, Declare, For, Function, If, Literal, Logical, LoopCommand, Operand, Operator, Ret, StmtExpr, Type, Unary, Variable, While, type AST, type BuildResult, type FunctionSignature, type ParseError } from "./ast";
 import type { TokenQueue } from "./tokenizer";
 import * as monaco from 'monaco-editor';
 
@@ -309,6 +309,9 @@ class Parser {
                     return this.parseDoWhile();
                 case "for":
                     return this.parseFor();
+                case "continue":
+                case "break":
+                    return this.parseLoopCommand();
                 case "return":
                     return this.parseReturn();
                 default:
@@ -680,6 +683,16 @@ class Parser {
         }
 
         throw new ParserException(nextToken, tokenLine, tokenColumn, "Variable '" + nextToken + "' does not exist.");
+    }
+
+    parseLoopCommand(): LoopCommand {
+        const cmd = this.tokens.next();
+
+        // count local variables
+        if (cmd === "continue") {
+            return new LoopCommand(LoopCommand.CONTINUE);
+        }
+        return new LoopCommand(LoopCommand.BREAK);
     }
 
     parseReturn(): Ret {
