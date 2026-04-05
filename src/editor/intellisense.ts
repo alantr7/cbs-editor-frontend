@@ -25,6 +25,8 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
     registerSnippet(monaco, "w", "while", "while ($1) {\n\t$0\n}");
     registerSnippet(monaco, "d", "do", "do {\n\t$0\n} while ($1);");
     registerSnippet(monaco, "f", "for", "for ($1; $2; $3) {\n\t$0\n}");
+    registerSnippet(monaco, "c", "continue", "continue;");
+    registerSnippet(monaco, "b", "break", "break;");
     registerSnippet(monaco, "r", "return", "return $1;");
 
     // pressing ctrl + space. modules + variable names + functions
