@@ -76,13 +76,13 @@ export abstract class Operand extends StmtExpr {
 export class Declare extends StmtExpr {
     type: Type;
     value: Operand | null;
-    lengths: number[];
+    length: number;
 
-    constructor(type: Type, value: Operand | null, lengths: number[]) {
+    constructor(type: Type, value: Operand | null, length: number) {
         super();
         this.type = type;
         this.value = value;
-        this.lengths = lengths;
+        this.length = length;
     }
     
     isStatement(): boolean {

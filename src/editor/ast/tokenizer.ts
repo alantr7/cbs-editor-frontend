@@ -150,13 +150,22 @@ export class TokenQueue {
         return token;
     }
 
-    rollback(): void {
-        this.col--;
-        this.offset--;
+    createRollbackPosition(): bigint {
+        return ((BigInt(this.row) << 32n) | (BigInt(this.col) & 0xffffffffn));
+    }
 
-        if (this.col < 0) {
-            this.row--;
-            this.col = this.queue[this.row].length - 1;
+    rollback(position?: bigint): void {
+        if (typeof position == 'bigint') {
+            this.row = Number(position >> 32n);
+            this.col = Number(position & 0xffffffffn);
+        } else {
+            this.col--;
+            this.offset--;
+
+            if (this.col < 0) {
+                this.row--;
+                this.col = this.queue[this.row].length - 1;
+            }
         }
     }
 

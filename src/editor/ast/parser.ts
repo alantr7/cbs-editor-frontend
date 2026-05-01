@@ -288,6 +288,7 @@ class Parser {
             }
         }
 
+        const rollbackPos = this.tokens.createRollbackPosition();
         this.tokens.advance();
 
         // variable declare
@@ -297,7 +298,20 @@ class Parser {
             return this.parseVariableDeclare(parameterType, this.tokens.next()!);
         }
 
-        console.log('next token: ' + this.tokens.peek());
+        // todo: array access
+        const access: Operand[] = [];
+        if (this.tokens.peek() === "[") {
+            while (this.tokens.peek() === "[") {
+                this.tokens.advance();
+                const expr = this.parseExpression();
+                if (expr === null || expr.getResultType() != Type.INT) {
+                    throw new ParserException("", this.tokens.getLine(), this.tokens.getColumn(), "Not an integer!");
+                }
+
+                access.push(expr);
+                this.expect(this.tokens.next(), "]");
+            }
+        }
 
         // variable assign
         if (this.tokens.peek() === "=") {
@@ -306,7 +320,7 @@ class Parser {
             return this.parseVariableAssign(nextToken as string);
         }
 
-        this.tokens.rollback();
+        this.tokens.rollback(rollbackPos);
 
         const expression = this.parseExpression();
         if (expression?.isStatement()) {
@@ -319,12 +333,34 @@ class Parser {
 
     parseVariableDeclare(type: Type, name: string): Declare | null {
         let initialValue: Operand | null;
+        let length = 1;
+        let dimensions: number[] = [];
+        let dimensionsCount = 0;
         const tokenLine = this.tokens.getPrevLine();
         const tokenColumn = this.tokens.getPrevColumn();
 
         // no assignment
         if (this.tokens.peek() === ";") {
             // todo: arrays
+            initialValue = null;
+            dimensions.push(length);
+            dimensionsCount = 1;
+        }
+        else if (this.tokens.peek() === "[") {
+            while (this.tokens.peek() === "[") {
+                this.tokens.advance();
+                const lengthLiteral = this.parseExpression();
+
+                if (!(lengthLiteral instanceof Literal) || (lengthLiteral as Literal).type != Literal.INT || ((lengthLiteral as Literal).value as number) < 1) {
+                    throw new ParserException("", this.tokens.getLine(), tokenColumn, "Array dimension length must be a positive integer literal.");
+                }
+
+                const literal = lengthLiteral as Literal;
+                length *= literal.value as number;
+                dimensions.push(literal.value as number);
+                dimensionsCount++;
+                this.expect(this.tokens.next(), "]");
+            }
             initialValue = null;
         }
         else if (this.tokens.peek() === "=") {
@@ -359,10 +395,10 @@ class Parser {
             throw new ParserException(name, tokenLine, tokenColumn, "Variable with name '" + name + "' already exists in this scope.");
         }
 
-        const variable = new Variable(type, this.context.scopes.length === 1, this.context.getCurrentScope().nextVariableOffset++, 1);
+        const variable = new Variable(type, this.context.scopes.length === 1, this.context.getCurrentScope().nextVariableOffset++, dimensions);
         this.context.getCurrentScope().variables[name] = variable;
         this.context.getCurrentScope().localVariables[name] = variable;
-        return new Declare(type, initialValue, [ 1 ]);
+        return new Declare(type, initialValue, length);
     }
 
     parseVariableAssign(name: string) {
@@ -499,8 +535,6 @@ class Parser {
             postfix.push(this.parseOperator(pop as string) as Operand);
         }
 
-        console.log('postfix', postfix);
-
         for (let i = 0; i < postfix.length; i++) {
             const operand = postfix[i];
             if (operand instanceof Operator) {
@@ -630,6 +664,31 @@ class Parser {
         }
         else {
             const variable = this.context.getCurrentScope().variables[nextToken];
+            const access: Operand[] = [];
+            let isArrayAccess = false;
+            let dimensionCount = 0;
+            
+            // Array access
+            if (this.tokens.peek() === "[") {
+                while (this.tokens.peek() === "[") {
+                    this.tokens.advance();
+                    const expr = this.parseExpression();
+                    if (expr === null || expr?.getResultType() !== Type.INT) {
+                        console.error("Not an integer!", expr);
+                        throw new ParserException("", this.tokens.getLine(), this.tokens.getColumn(), "Not an integer.");
+                    }
+
+                    access.push(expr);
+                    dimensionCount++;
+                    this.expect(this.tokens.next(), "]");
+                }
+                isArrayAccess = true;
+            } else isArrayAccess = variable !== null && variable.length > 1;
+
+            if (variable !== null && isArrayAccess && variable.lengths.length !== dimensionCount) {
+                throw new ParserException(" ", this.tokens.getLine(), this.tokens.getColumn(), "Array access must specify all array dimensions.");
+            }
+
             if (prefix == 0) {
                 if (this.tokens.peek() === "++") {
                     // is postfix
@@ -644,9 +703,9 @@ class Parser {
 
             if (variable != null) {
                 if ((prefix | postfix) != 0) {
-                    return new Unary(new Access(variable, new Array(0)), (prefix | postfix));
+                    return new Unary(new Access(variable, access), (prefix | postfix));
                 }
-                return new Access(variable, new Array(0));
+                return new Access(variable, access);
             }
         }
 
