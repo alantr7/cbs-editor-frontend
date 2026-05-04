@@ -17,7 +17,24 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
             { open: "{", close: "}" },
             { open: '"', close: '"' },
         ],
-        brackets: [['{', '}']]
+        brackets: [['{', '}']],
+        comments: {
+            lineComment: "//"
+        }
+    });
+
+    // auto comment when CTRL + /
+    monaco.editor.addEditorAction({
+        id: "toggle-comment",
+        label: "Toggle Comment",
+        keybindings: [
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash
+        ],
+        run: function (ed) {
+            const action = ed.getAction("editor.action.commentLine");
+            console.log("Action", action);
+            action?.run();
+        }
     });
 
     // if statement snippet
