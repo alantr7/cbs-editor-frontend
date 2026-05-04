@@ -703,9 +703,9 @@ class Parser {
                     this.expect(this.tokens.next(), "]");
                 }
                 isArrayAccess = true;
-            } else isArrayAccess = variable !== null && variable.length > 1;
+            } else isArrayAccess = variable !== null && variable !== undefined && variable.length > 1;
 
-            if (variable !== null && isArrayAccess && variable.lengths.length !== dimensionCount) {
+            if (variable && isArrayAccess && variable.lengths.length !== dimensionCount) {
                 throw new ParserException(" ", this.tokens.getLine(), this.tokens.getColumn(), "Array access must specify all array dimensions.");
             }
 
@@ -721,7 +721,7 @@ class Parser {
                 }
             }
 
-            if (variable != null) {
+            if (variable) {
                 if ((prefix | postfix) != 0) {
                     return new Unary(new Access(variable, access), (prefix | postfix));
                 }
