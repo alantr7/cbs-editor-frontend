@@ -694,8 +694,7 @@ class Parser {
                     this.tokens.advance();
                     const expr = this.parseExpression();
                     if (expr === null || expr?.getResultType() !== Type.INT) {
-                        console.error("Not an integer!", expr);
-                        throw new ParserException("", this.tokens.getLine(), this.tokens.getColumn(), "Not an integer.");
+                        throw new ParserException(nextToken, tokenLine, tokenColumn, "Array dimension must be a positive integer.");
                     }
 
                     access.push(expr);
@@ -706,7 +705,7 @@ class Parser {
             } else isArrayAccess = variable !== null && variable !== undefined && variable.length > 1;
 
             if (variable && isArrayAccess && variable.lengths.length !== dimensionCount) {
-                throw new ParserException(" ", this.tokens.getLine(), this.tokens.getColumn(), "Array access must specify all array dimensions.");
+                throw new ParserException(nextToken, tokenLine, tokenColumn,"Array access must specify all array dimensions.");
             }
 
             if (prefix == 0) {
