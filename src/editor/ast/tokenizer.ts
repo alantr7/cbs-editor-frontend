@@ -39,7 +39,7 @@ function tokenizeLine(line: string): [string[], number[]] {
     }
 
     for (let i = 1; i < line.length; i++) {
-        const character = line.charAt(i);
+        const character = line[i];
         if (character == '"') {
             if (quotes) {
                 tokens.push(line.substring(start, i + 1));
@@ -96,7 +96,8 @@ function tokenizeLine(line: string): [string[], number[]] {
 
                     if (isFloat(token)) {
                         tokens.push(token);
-                        start = i;
+                        columns.push(start + columnsOffset);
+                        start = i--;
                         continue;
                     }
                 }

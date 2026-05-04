@@ -464,7 +464,6 @@ class Parser {
             }
 
             else if (isFloat(next)) {
-                console.log("IT IS A FLOAT!");
                 postfix.push(new Literal(Literal.FLOAT, parseFloat(next)));
                 expectsOperator = true;
             }
