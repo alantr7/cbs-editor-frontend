@@ -54,6 +54,13 @@ export function setupIntellisense(monaco: Monaco, session: EditorSession) {
                 return  { suggestions };
             }
 
+            // check if inside a comment
+            for (let i = textUntilPosition.length - 1; i >= 1; i--) {
+                if (textUntilPosition[i] === '/' && textUntilPosition[i - 1] === '/') {
+                    return { suggestions };
+                }
+            }
+
             const scope = getScopeRecursively(latestAst.scopes_tree, position);
             console.log('latest scope: ', latestAst.scopes_tree, scope);
 
@@ -159,6 +166,13 @@ function registerSnippet(monaco: Monaco, trigger: string, label: string, text: s
 
             if (isInsideString) {
                 return  { suggestions: [] };
+            }
+
+            // check if inside a comment
+            for (let i = textUntilPosition.length - 1; i >= 1; i--) {
+                if (textUntilPosition[i] === '/' && textUntilPosition[i - 1] === '/') {
+                    return { suggestions: [] };
+                }
             }
 
             const scope = getScopeRecursively(latestAst.scopes_tree, position);
