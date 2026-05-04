@@ -144,6 +144,23 @@ export default function EditorPage() {
         });
     }, []);
 
+    useEffect(() => {
+        if (isLoading || files[currentFile].is_saving || files[currentFile].saved_content === editorRef.current?.getValue())
+            return;
+
+        const callback = (ev: any) => {
+            if (files[currentFile].is_saving || files[currentFile].saved_content === editorRef.current?.getValue())
+                return;
+
+            ev.preventDefault();
+        }
+
+        window.addEventListener("beforeunload", callback);
+        return () => {
+            window.removeEventListener("beforeunload", callback);
+        };
+    }, [isLoading, files, editorRef]);
+
     function handleSave(ev: KeyboardEvent) {
         if (ev.ctrlKey && ev.key.toLowerCase() === 's') {
             ev.preventDefault();
