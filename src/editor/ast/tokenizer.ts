@@ -1,4 +1,4 @@
-import { isFloat, isOperator, isUnaryOperator } from "./parser";
+import { isFloat, isKeyword, isOperator, isUnaryOperator } from "./parser";
 
 export function tokenize(input: string[]) {
     const lines: string[][] = [];
@@ -56,6 +56,13 @@ function tokenizeLine(line: string): [string[], number[]] {
             if (character == '.' && line.substring(start, i).match(/^\d+/))
                 continue;
 
+            let pending = line.substring(start, i).trim();
+            if (pending.length > 0) {
+                tokens.push(pending);
+                columns.push(start + columnsOffset);
+                start = i; 
+            }
+
             let token: string | null = null;
 
             if (character == '=' && tokens[tokens.length - 1] !== undefined) {
@@ -89,11 +96,11 @@ function tokenizeLine(line: string): [string[], number[]] {
                     const previous = tokens[tokens.length - 1];
                     const previous2 = tokens[tokens.length - 2];
 
-                    if (previous === "-" && previous2.length === 1 && isSymbol(previous2.charAt(0))) {
+                    if (previous === "-" && (isKeyword(previous2) || previous2 === ";" || isOperator(previous2))) {
                         tokens.pop();
                         token = "-" + token;
                     }
-
+                    
                     if (isFloat(token)) {
                         tokens.push(token);
                         columns.push(start + columnsOffset);

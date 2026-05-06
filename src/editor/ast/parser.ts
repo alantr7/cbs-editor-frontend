@@ -906,6 +906,11 @@ export function isBoolean(input: string): boolean {
     return input === "true" || input === "false";
 }
 
+const keywords = ["int", "string", "float", "struct", "return", "break", "if", "else"];
+export function isKeyword(input: string): boolean {
+    return keywords.includes(input);
+}
+
 export function getPrecedence(input: string) {
     switch (input) {
         case "(":
