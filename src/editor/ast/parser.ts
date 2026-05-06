@@ -126,8 +126,8 @@ class Parser {
             this.errors.push({
                 startLineNumber: tokenLine1,
                 endLineNumber: tokenLine1,
-                startColumn: tokenColumn2 + name.length,
-                endColumn: tokenColumn2 + name.length + 1,
+                startColumn: tokenColumn2 + name.length + 1,
+                endColumn: tokenColumn2 + name.length + 2,
                 severity: monaco.MarkerSeverity.Error,
                 message: "Missing semicolon (;)."
             });

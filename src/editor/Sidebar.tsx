@@ -16,7 +16,7 @@ export default function Sidebar({files, currentFile, openFile, openChangelog, sh
             </div>)}
             <hr />
             <div onClick={showAiPrompt} className="file ai"></div>
-            <a href="https://github.com/alantr7/codebots/wiki/Scripting-Language" target="_blank">
+            <a href="https://github.com/alantr7/cbs-lang/wiki/Language" target="_blank">
                 <div className="file docs">Documentation</div>
             </a>
         </div>
