@@ -141,6 +141,11 @@ export default function EditorPage() {
                 saved_content: f.content,
             }) as BotFile));
             setIsLoading(false);
+        }).catch(err => {
+            const status = err.response.status;
+            if (status === 403) {
+                navigate("/error?code=no_access");
+            }
         });
     }, []);
 

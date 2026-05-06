@@ -249,7 +249,7 @@ a {
 
 .status-bar {
     background-color: #1a1c21;
-    border-top:1px solid hsla(0, 0%, 100%, .1);
+    border-top: 1px solid hsla(0, 0%, 100%, .1);
     color: #b8b8b8;
     font-family: "Space Mono", sans-serif;
     font-size: 12px;
@@ -332,4 +332,15 @@ a {
 }
 .ai-prompt small {
     color: #a6e3a1;
+}
+
+#error-page {
+    color: #d3d3d3;
+    font-family: "Space Mono", sans-serif;
+    margin: 0 auto;
+    max-width: 800px;
+    padding-top: 96px;
+}
+#error-page h3 {
+    color: white;
 }
