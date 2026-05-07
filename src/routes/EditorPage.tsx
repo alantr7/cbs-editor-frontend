@@ -87,6 +87,12 @@ export default function EditorPage() {
     }
 
     useEffect(() => {
+        if (!isEditorLoading && editorRef.current) {
+            handleEditorChangeContent();
+        }
+    }, [isEditorLoading, editorRef]);
+
+    useEffect(() => {
         editorRef.current?.setValue(files[currentFile].content);
     }, [currentFile]);
 
