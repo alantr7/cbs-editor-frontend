@@ -172,6 +172,39 @@ export default function EditorPage() {
         };
     }, [isLoading, files, editorRef]);
 
+    // check if something happened to the session (if it got deleted)
+    const [lastStatusCheck, setLastStatusCheck] = useState(Date.now());
+    const [statusCheckController, setStatusCheckController] = useState<AbortController>();
+    
+    useEffect(() => {
+        if (isLoading)
+            return;
+
+        const listener = () => {
+            if (document.hidden || Date.now() - lastStatusCheck < 5000)
+                return;
+
+            statusCheckController?.abort();
+            
+            const abortController = new AbortController();
+            setStatusCheckController(abortController);
+            setLastStatusCheck(Date.now());
+
+            api.get(`/api/sessions/${session?.id}/status`, {signal: abortController.signal}).catch(err => {
+                const status = err.response.status;
+                if (status === 403) {
+                    navigate("/error?code=no_access");
+                }
+                else if (status === 404) {
+                    navigate("/error?code=expired");
+                }
+            });
+        };
+
+        document.addEventListener("visibilitychange", listener);
+        return () => (document.removeEventListener("visibilitychange", listener));
+    }, [lastStatusCheck, isLoading]);
+
     function handleSave(ev: KeyboardEvent) {
         if (ev.ctrlKey && ev.key.toLowerCase() === 's') {
             ev.preventDefault();

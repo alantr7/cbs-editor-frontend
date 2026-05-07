@@ -2,7 +2,7 @@ import { useLocation } from "react-router";
 
 const codeToMessageMap: Record<string, string> = {
     "no_access": "You have no access to this session.",
-    "expired": "Session has expired.",
+    "expired": "Session has expired or was deleted.",
     "": "",
 };
 
