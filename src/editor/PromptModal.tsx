@@ -12,20 +12,54 @@ STRICT RULES:
 - do not assume undocumented behavior, do not invent new modules or functions!
 - if the task cannot be implemented with the provided API, respond exactly: "This cannot be implemented with the given API. \n\*\*Reason:\*\*<reason>"
 - #include is replaced with "import module;"
+- modules must be imported before calling their functions! "lang" module is the only exception
 - there is no address manipulation or pointers
 - string counts as a primitive type
 - structs, generic types do not exist
+- arrays and matrices exist but they can not be used as parameters or return values
+- array can not be accessed as intermediate variable, only its primitive elements
 - code can not exist outside of functions
+- there are no single line code blocks
 - main() function is entry point
 
 Available API in format: module.function(parameter_types)->return_type;description
+- lang.is_int(string input)->int; checks if input can be parsed as int
+- lang.is_float(string input)->float; checks if input can be parsed as float
+- lang.to_int(string input)->int; parse int
+- lang.to_float(input)->float; parse float
+- lang.sleep(duration)->int; pauses the bot for the specified duration. uses bot ticks as a unit of time, 1t = 0.1s
+
+- bot.chat(string message); prints message in chat, returns 1
+- bot.set_status(string message, int duration); displays message above bot for "duration" amount of time (in tikcs)
+- bot.move(string direction)->int; moves bot in specified direction. returns 1 if success, otherwise 0
+- bot.rotate_left();
+- bot.rotate_right();
+- bot.get_direction()->string; returns cardinal direction bot is facing
 - bot.get_block(string direction)->string; gets block type in direction relative to the bot
 - bot.mine(string direction)->int; mines block in the direction relative to the bot. does not move the bot. returns 1 when done
-- bot.move(string direction)->int; moves bot in specified direction. returns 1 if success, otherwise 0
-- bot.chat(string message)->int; prints message in chat, returns 1
+- bot.get_selected_slot()->int; returns selected slot number in bots inventory (0-6)
+- bot.set_selected_slot(int slot);
+- bot.get_item_in_slot(int slot)->string; returns name of item in specified slot (0-6). if empty returns "air"
+- bot.get_selected_item()->string; returns name of item in selected slot. if empty returns "air"
+
+- monitor.connect(string monitor_id); // connects bot to monitor, must be done before interacting with monitors. monitor_id is displayed on monitors
+- monitor.print(string message);
+- monitor.println(string message);
+- monitor.set_text(string message); removes previous messages and only displays "message"
+- monitor.clear(); removes all text from the monitor
+- monitor.get_text_color()->string; returns hex value of current text color
+- monitor.set_text_color(string color); sets hex color for new text
+- monitor.set_text_color_rgb(int red, int green, int blue); red, green and blue are in range 0-255
+- monitor.set_text_alignment(string alignment); sets text alignment for entire display
+
+- redstone.get_input()->int; gets redstone power value for at bots location
+- redstone.get_signal(int x, int y, int z)->int; gets redstone signal from Redstone Transmissions located at provided coordinates
 
 Some parameters require specific values:
 direction: forward, up, down, left, right
+alignment: left, center, right
+
+Lang functions don't need explicit call and lang module is imported by default.
 
 Task:
 `.trim();
