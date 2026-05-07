@@ -919,6 +919,8 @@ export function getPrecedence(input: string) {
         case "=": return 2; // maybe above NEEDS to be 1. check if breaks
         case "||": return 3;
         case "&&": return 4;
+        case "|": return 5;
+        case "&": return 6;
         case "<":
         case ">":
         case "==":
